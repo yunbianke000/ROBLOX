@@ -128,32 +128,33 @@ local PlayerESP = {
 -- 动画辅助函数
 -- ============================================
 function PlayerESP:tweenButton(button, targetColor, duration)
-    duration = duration or 0.15
+    duration = duration or 0.2
     local tweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
     local tween = TweenService:Create(button, tweenInfo, {BackgroundColor3 = targetColor})
     tween:Play()
 end
 
 function PlayerESP:buttonClickEffect(button)
-    -- 点击缩放效果
+    -- 点击缩放效果 - 更现代的弹性动画
     local originalSize = button.Size
-    local tweenInfo = TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local shrinkInfo = TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local expandInfo = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
     
-    -- 缩小
-    local shrinkTween = TweenService:Create(button, tweenInfo, {
-        Size = UDim2.new(originalSize.X.Scale, originalSize.X.Offset - 4, originalSize.Y.Scale, originalSize.Y.Offset - 4)
+    -- 先缩小
+    local shrinkTween = TweenService:Create(button, shrinkInfo, {
+        Size = UDim2.new(originalSize.X.Scale, originalSize.X.Offset - 6, originalSize.Y.Scale, originalSize.Y.Offset - 6)
     })
     shrinkTween:Play()
     
-    -- 延迟后恢复
-    task.delay(0.08, function()
-        local expandTween = TweenService:Create(button, tweenInfo, {Size = originalSize})
+    -- 然后弹性放大恢复
+    shrinkTween.Completed:Connect(function()
+        local expandTween = TweenService:Create(button, expandInfo, {Size = originalSize})
         expandTween:Play()
     end)
 end
 
 function PlayerESP:tweenFrame(frame, targetSize, targetPosition, duration)
-    duration = duration or 0.25
+    duration = duration or 0.3
     local tweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
     local props = {}
     if targetSize then props.Size = targetSize end
@@ -194,28 +195,34 @@ end
 function PlayerESP:createColorPicker(parent, defaultColor, colorName, callback)
     local colorFrame = Instance.new("Frame")
     colorFrame.Name = colorName .. "ColorFrame"
-    colorFrame.Size = UDim2.new(0.95, 0, 0, 30)
+    colorFrame.Size = UDim2.new(1, 0, 0, 44)
     colorFrame.BackgroundTransparency = 1
+    colorFrame.ZIndex = 3
     colorFrame.Parent = parent
 
     local colorLabel = Instance.new("TextLabel")
-    colorLabel.Size = UDim2.new(0.5, 0, 1, 0)
+    colorLabel.Size = UDim2.new(0.6, 0, 1, 0)
     colorLabel.BackgroundTransparency = 1
     colorLabel.Text = colorName .. "颜色"
-    colorLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    colorLabel.TextSize = 12
-    colorLabel.Font = Enum.Font.SourceSans
+    colorLabel.TextColor3 = Color3.fromRGB(226, 232, 240)
+    colorLabel.TextSize = 14
+    colorLabel.Font = Enum.Font.Gotham
     colorLabel.TextXAlignment = Enum.TextXAlignment.Left
+    colorLabel.ZIndex = 4
     colorLabel.Parent = colorFrame
 
     local colorButton = Instance.new("TextButton")
-    colorButton.Size = UDim2.new(0.4, 0, 0.7, 0)
-    colorButton.Position = UDim2.new(0.55, 0, 0.15, 0)
+    colorButton.Size = UDim2.new(0, 44, 0, 44)
+    colorButton.Position = UDim2.new(1, -44, 0, 0)
     colorButton.BackgroundColor3 = defaultColor
-    colorButton.BorderSizePixel = 1
-    colorButton.BorderColor3 = Color3.fromRGB(200, 200, 200)
+    colorButton.BorderSizePixel = 0
     colorButton.Text = ""
+    colorButton.ZIndex = 4
     colorButton.Parent = colorFrame
+    
+    local colorBtnCorner = Instance.new("UICorner")
+    colorBtnCorner.CornerRadius = UDim.new(0, 10)
+    colorBtnCorner.Parent = colorButton
 
     colorButton.MouseButton1Click:Connect(function()
         self:showColorPicker(defaultColor, function(newColor)
@@ -237,21 +244,30 @@ function PlayerESP:showColorPicker(defaultColor, callback)
     colorPickerGui.Parent = playerGui
 
     local colorFrame = Instance.new("Frame")
-    colorFrame.Size = UDim2.new(0, 220, 0, 280)
-    colorFrame.Position = UDim2.new(0.5, -110, 0.5, -140)
-    colorFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    colorFrame.BorderSizePixel = 2
-    colorFrame.BorderColor3 = Color3.fromRGB(100, 100, 100)
+    colorFrame.Size = UDim2.new(0, 280, 0, 340)
+    colorFrame.Position = UDim2.new(0.5, -140, 0.5, -170)
+    colorFrame.BackgroundColor3 = Color3.fromRGB(24, 24, 32)
+    colorFrame.BorderSizePixel = 0
+    colorFrame.ZIndex = 10
     colorFrame.Parent = colorPickerGui
+    
+    local colorFrameCorner = Instance.new("UICorner")
+    colorFrameCorner.CornerRadius = UDim.new(0, 16)
+    colorFrameCorner.Parent = colorFrame
 
     local titleLabel = Instance.new("TextLabel")
-    titleLabel.Size = UDim2.new(1, 0, 0, 35)
-    titleLabel.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    titleLabel.Size = UDim2.new(1, 0, 0, 56)
+    titleLabel.BackgroundColor3 = Color3.fromRGB(32, 32, 44)
     titleLabel.Text = "选择颜色"
     titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    titleLabel.TextSize = 16
-    titleLabel.Font = Enum.Font.SourceSansBold
+    titleLabel.TextSize = 18
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.ZIndex = 11
     titleLabel.Parent = colorFrame
+    
+    local titleCorner = Instance.new("UICorner")
+    titleCorner.CornerRadius = UDim.new(0, 16)
+    titleCorner.Parent = titleLabel
 
     local colorGrid = {
         Color3.new(1, 0, 0), Color3.new(1, 0.5, 0), Color3.new(1, 1, 0),
@@ -269,13 +285,18 @@ function PlayerESP:showColorPicker(defaultColor, callback)
         local row = math.floor((i - 1) / 3)
         local col = (i - 1) % 3
         local colorBtn = Instance.new("TextButton")
-        colorBtn.Size = UDim2.new(0, 50, 0, 30)
-        colorBtn.Position = UDim2.new(0, 15 + col * 60, 0, 45 + row * 35)
+        colorBtn.Size = UDim2.new(0, 70, 0, 44)
+        colorBtn.Position = UDim2.new(0, 20 + col * 80, 0, 68 + row * 48)
         colorBtn.BackgroundColor3 = color
-        colorBtn.BorderSizePixel = 1
-        colorBtn.BorderColor3 = Color3.fromRGB(200, 200, 200)
+        colorBtn.BorderSizePixel = 0
         colorBtn.Text = ""
+        colorBtn.ZIndex = 11
         colorBtn.Parent = colorFrame
+        
+        local colorBtnCorner = Instance.new("UICorner")
+        colorBtnCorner.CornerRadius = UDim.new(0, 10)
+        colorBtnCorner.Parent = colorBtn
+        
         colorBtn.MouseButton1Click:Connect(function()
             callback(color)
             colorPickerGui:Destroy()
@@ -283,14 +304,20 @@ function PlayerESP:showColorPicker(defaultColor, callback)
     end
 
     local closeButton = Instance.new("TextButton")
-    closeButton.Size = UDim2.new(0.8, 0, 0, 30)
-    closeButton.Position = UDim2.new(0.1, 0, 0, 240)
-    closeButton.BackgroundColor3 = Color3.fromRGB(160, 0, 70)
+    closeButton.Size = UDim2.new(0, 240, 0, 44)
+    closeButton.Position = UDim2.new(0.5, -120, 1, -64)
+    closeButton.BackgroundColor3 = Color3.fromRGB(239, 68, 68)
     closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     closeButton.Text = "关闭"
-    closeButton.Font = Enum.Font.SourceSansBold
-    closeButton.TextSize = 14
+    closeButton.Font = Enum.Font.GothamBold
+    closeButton.TextSize = 16
+    closeButton.ZIndex = 11
     closeButton.Parent = colorFrame
+    
+    local closeBtnCorner = Instance.new("UICorner")
+    closeBtnCorner.CornerRadius = UDim.new(0, 12)
+    closeBtnCorner.Parent = closeButton
+    
     closeButton.MouseButton1Click:Connect(function()
         colorPickerGui:Destroy()
     end)
@@ -301,33 +328,37 @@ end
 -- ============================================
 function PlayerESP:createParamInput(parent, name, default, min, max, callback, isInteger)
     local paramFrame = Instance.new("Frame")
-    paramFrame.Size = UDim2.new(0.95, 0, 0, 28)
+    paramFrame.Size = UDim2.new(1, 0, 0, 48)
     paramFrame.BackgroundTransparency = 1
+    paramFrame.ZIndex = 3
     paramFrame.Parent = parent
 
     local nameLabel = Instance.new("TextLabel")
-    nameLabel.Size = UDim2.new(0.5, 0, 1, 0)
+    nameLabel.Size = UDim2.new(0.6, 0, 1, 0)
     nameLabel.BackgroundTransparency = 1
     nameLabel.Text = name
-    nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    nameLabel.TextSize = 12
-    nameLabel.Font = Enum.Font.SourceSans
+    nameLabel.TextColor3 = Color3.fromRGB(226, 232, 240)
+    nameLabel.TextSize = 14
+    nameLabel.Font = Enum.Font.Gotham
     nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+    nameLabel.ZIndex = 4
     nameLabel.Parent = paramFrame
 
     local inputBox = Instance.new("TextBox")
-    inputBox.Size = UDim2.new(0.35, 0, 0.8, 0)
-    inputBox.Position = UDim2.new(0.6, 0, 0.1, 0)
-    inputBox.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    inputBox.Size = UDim2.new(0, 100, 0, 40)
+    inputBox.Position = UDim2.new(1, -100, 0, 4)
+    inputBox.BackgroundColor3 = Color3.fromRGB(51, 65, 85)
     inputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
     inputBox.PlaceholderText = tostring(default)
     inputBox.Text = tostring(default)
-    inputBox.Font = Enum.Font.SourceSans
-    inputBox.TextSize = 12
+    inputBox.Font = Enum.Font.Gotham
+    inputBox.TextSize = 14
+    inputBox.TextXAlignment = Enum.TextXAlignment.Center
+    inputBox.ZIndex = 4
     inputBox.Parent = paramFrame
 
     local inputCorner = Instance.new("UICorner")
-    inputCorner.CornerRadius = UDim.new(0, 4)
+    inputCorner.CornerRadius = UDim.new(0, 10)
     inputCorner.Parent = inputBox
 
     inputBox.FocusLost:Connect(function()
@@ -346,9 +377,6 @@ function PlayerESP:createParamInput(parent, name, default, min, max, callback, i
         end
     end)
 
-    inputBox.FocusLost:Connect(function()
-    end)
-
     return paramFrame
 end
 
@@ -357,17 +385,21 @@ end
 -- ============================================
 function PlayerESP:createTabButton(parent, name, tabId, position)
     local tabBtn = Instance.new("TextButton")
-    tabBtn.Size = UDim2.new(0.24, 0, 1, 0)
+    tabBtn.Size = UDim2.new(0.25, 0, 0, 36)
     tabBtn.Position = position
-    -- 霓虹风格：选中时青色发光，未选中时深色
-    tabBtn.BackgroundColor3 = tabId == self.currentTab and Color3.fromRGB(0, 200, 200) or Color3.fromRGB(30, 30, 45)
+    -- 现代风格：选中时紫色高亮，未选中时深色
+    tabBtn.BackgroundColor3 = tabId == self.currentTab and Color3.fromRGB(99, 102, 241) or Color3.fromRGB(32, 32, 44)
     tabBtn.Text = name
-    tabBtn.TextColor3 = tabId == self.currentTab and Color3.fromRGB(0, 255, 255) or Color3.fromRGB(150, 150, 150)
-    tabBtn.TextSize = 12
-    tabBtn.Font = Enum.Font.SourceSansBold
-    tabBtn.BorderSizePixel = tabId == self.currentTab and 1 or 0
-    tabBtn.BorderColor3 = Color3.fromRGB(0, 255, 255)
+    tabBtn.TextColor3 = tabId == self.currentTab and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(148, 163, 184)
+    tabBtn.TextSize = 14
+    tabBtn.Font = Enum.Font.GothamBold
+    tabBtn.BorderSizePixel = 0
+    tabBtn.ZIndex = 3
     tabBtn.Parent = parent
+    
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 8)
+    btnCorner.Parent = tabBtn
     
     return tabBtn
 end
@@ -377,10 +409,8 @@ function PlayerESP:switchTab(tabId)
     
     for _, btn in pairs(self.tabButtons) do
         local isSelected = btn.Name == tabId .. "Tab"
-        btn.BackgroundColor3 = isSelected and Color3.fromRGB(0, 200, 200) or Color3.fromRGB(30, 30, 45)
-        btn.TextColor3 = isSelected and Color3.fromRGB(0, 255, 255) or Color3.fromRGB(150, 150, 150)
-        btn.BorderSizePixel = isSelected and 1 or 0
-        btn.BorderColor3 = Color3.fromRGB(0, 255, 255)
+        btn.BackgroundColor3 = isSelected and Color3.fromRGB(99, 102, 241) or Color3.fromRGB(32, 32, 44)
+        btn.TextColor3 = isSelected and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(148, 163, 184)
     end
     
     for id, frame in pairs(self.tabContents) do
@@ -505,7 +535,7 @@ function PlayerESP:toggleHealthBars()
     end
     if self.healthBarToggleBtn then
         self.healthBarToggleBtn.Text = "血量条: " .. (self.showHealthBars and "开启" or "关闭")
-        self:tweenButton(self.healthBarToggleBtn, self.showHealthBars and Color3.fromRGB(0, 160, 130) or Color3.fromRGB(160, 0, 70))
+        self:tweenButton(self.healthBarToggleBtn, self.showHealthBars and Color3.fromRGB(99, 102, 241) or Color3.fromRGB(239, 68, 68))
     end
 end
 
@@ -586,7 +616,7 @@ function PlayerESP:toggleHeadCircles()
     end
     if self.headCircleToggleBtn then
         self.headCircleToggleBtn.Text = "头部圆圈: " .. (self.showHeadCircles and "开启" or "关闭")
-        self:tweenButton(self.headCircleToggleBtn, self.showHeadCircles and Color3.fromRGB(0, 160, 130) or Color3.fromRGB(160, 0, 70))
+        self:tweenButton(self.headCircleToggleBtn, self.showHeadCircles and Color3.fromRGB(99, 102, 241) or Color3.fromRGB(239, 68, 68))
     end
 end
 
@@ -632,7 +662,7 @@ function PlayerESP:toggleFovCircle()
     end
     if self.fovCircleToggleBtn then
         self.fovCircleToggleBtn.Text = "FOV圈: " .. (self.showFovCircle and "开启" or "关闭")
-        self:tweenButton(self.fovCircleToggleBtn, self.showFovCircle and Color3.fromRGB(0, 160, 130) or Color3.fromRGB(160, 0, 70))
+        self:tweenButton(self.fovCircleToggleBtn, self.showFovCircle and Color3.fromRGB(34, 197, 94) or Color3.fromRGB(239, 68, 68))
     end
 end
 
@@ -746,7 +776,7 @@ function PlayerESP:toggleFly()
     
     if self.flyToggleBtn then
         self.flyToggleBtn.Text = "飞行: " .. (self.flyEnabled and "开启" or "关闭")
-        self:tweenButton(self.flyToggleBtn, self.flyEnabled and Color3.fromRGB(0, 160, 130) or Color3.fromRGB(160, 0, 70))
+        self:tweenButton(self.flyToggleBtn, self.flyEnabled and Color3.fromRGB(99, 102, 241) or Color3.fromRGB(239, 68, 68))
     end
 end
 
@@ -866,7 +896,7 @@ function PlayerESP:stopFly()
     
     if self.flyToggleBtn then
         self.flyToggleBtn.Text = "飞行: 关闭"
-        self.flyToggleBtn.BackgroundColor3 = Color3.fromRGB(160, 0, 70)
+        self.flyToggleBtn.BackgroundColor3 = Color3.fromRGB(239, 68, 68)
     end
 end
 
@@ -884,7 +914,7 @@ function PlayerESP:toggleThirdPerson()
     
     if self.thirdPersonToggleBtn then
         self.thirdPersonToggleBtn.Text = "第三人称: " .. (self.forceThirdPerson and "开启" or "关闭")
-        self:tweenButton(self.thirdPersonToggleBtn, self.forceThirdPerson and Color3.fromRGB(0, 160, 130) or Color3.fromRGB(160, 0, 70))
+        self:tweenButton(self.thirdPersonToggleBtn, self.forceThirdPerson and Color3.fromRGB(34, 197, 94) or Color3.fromRGB(239, 68, 68))
     end
 end
 
@@ -945,7 +975,7 @@ function PlayerESP:showFlyJoystick()
     joystickKnob.Name = "JoystickKnob"
     joystickKnob.Size = UDim2.new(0, 50, 0, 50)
     joystickKnob.Position = UDim2.new(0.5, -25, 0.5, -25)
-    joystickKnob.BackgroundColor3 = Color3.fromRGB(100, 0, 180)
+    joystickKnob.BackgroundColor3 = Color3.fromRGB(99, 102, 241)
     joystickKnob.BackgroundTransparency = 0.3
     joystickKnob.BorderSizePixel = 0
     joystickKnob.Parent = joystickBg
@@ -959,7 +989,7 @@ function PlayerESP:showFlyJoystick()
     upBtn.Name = "UpBtn"
     upBtn.Size = UDim2.new(0, 60, 0, 60)
     upBtn.Position = UDim2.new(1, -80, 1, -180)
-    upBtn.BackgroundColor3 = Color3.fromRGB(0, 160, 130)
+    upBtn.BackgroundColor3 = Color3.fromRGB(34, 197, 94)
     upBtn.BackgroundTransparency = 0.3
     upBtn.Text = "▲"
     upBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -977,7 +1007,7 @@ function PlayerESP:showFlyJoystick()
     downBtn.Name = "DownBtn"
     downBtn.Size = UDim2.new(0, 60, 0, 60)
     downBtn.Position = UDim2.new(1, -80, 1, -110)
-    downBtn.BackgroundColor3 = Color3.fromRGB(160, 0, 70)
+    downBtn.BackgroundColor3 = Color3.fromRGB(239, 68, 68)
     downBtn.BackgroundTransparency = 0.3
     downBtn.Text = "▼"
     downBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -1376,13 +1406,13 @@ function PlayerESP:toggleAimbot()
         self:startAimbotHeartbeat()
         if self.aimbotToggleButton then
             self.aimbotToggleButton.Text = "自瞄: 开启"
-            self:tweenButton(self.aimbotToggleButton, Color3.fromRGB(0, 160, 130))
+            self:tweenButton(self.aimbotToggleButton, Color3.fromRGB(34, 197, 94))
         end
     else
         self:stopAimbotHeartbeat()
         if self.aimbotToggleButton then
             self.aimbotToggleButton.Text = "自瞄: 关闭"
-            self:tweenButton(self.aimbotToggleButton, Color3.fromRGB(160, 0, 70))
+            self:tweenButton(self.aimbotToggleButton, Color3.fromRGB(239, 68, 68))
         end
     end
 end
@@ -1399,7 +1429,7 @@ function PlayerESP:setupAimbotKey()
                 self:startAimbotHeartbeat()
                 if self.aimbotToggleButton then
                     self.aimbotToggleButton.Text = "自瞄: 按键中"
-                    self.aimbotToggleButton.BackgroundColor3 = Color3.fromRGB(255, 193, 7)
+                    self.aimbotToggleButton.BackgroundColor3 = Color3.fromRGB(245, 158, 11)
                 end
             end
         end
@@ -1413,7 +1443,7 @@ function PlayerESP:setupAimbotKey()
                 self:stopAimbotHeartbeat()
                 if self.aimbotToggleButton then
                     self.aimbotToggleButton.Text = "自瞄: 关闭"
-                    self.aimbotToggleButton.BackgroundColor3 = Color3.fromRGB(160, 0, 70)
+                    self.aimbotToggleButton.BackgroundColor3 = Color3.fromRGB(239, 68, 68)
                 end
             end
         end
@@ -1448,7 +1478,7 @@ function PlayerESP:toggleTriggerbot()
         end
         if self.triggerbotToggleButton then
             self.triggerbotToggleButton.Text = "扳机: 开启"
-            self:tweenButton(self.triggerbotToggleButton, Color3.fromRGB(0, 160, 130))
+            self:tweenButton(self.triggerbotToggleButton, Color3.fromRGB(34, 197, 94))
         end
         self:setupTriggerbotKey()
     else
@@ -1459,7 +1489,7 @@ function PlayerESP:toggleTriggerbot()
         self:releaseFire()
         if self.triggerbotToggleButton then
             self.triggerbotToggleButton.Text = "扳机: 关闭"
-            self:tweenButton(self.triggerbotToggleButton, Color3.fromRGB(160, 0, 70))
+            self:tweenButton(self.triggerbotToggleButton, Color3.fromRGB(239, 68, 68))
         end
     end
 end
@@ -1752,7 +1782,7 @@ function PlayerESP:toggleESP()
     end
     if self.toggleButton then
         self.toggleButton.Text = self.enabled and "标签: 开启" or "标签: 关闭"
-        self:tweenButton(self.toggleButton, self.enabled and Color3.fromRGB(0, 160, 130) or Color3.fromRGB(160, 0, 70))
+        self:tweenButton(self.toggleButton, self.enabled and Color3.fromRGB(99, 102, 241) or Color3.fromRGB(239, 68, 68))
     end
 end
 
@@ -1763,7 +1793,7 @@ function PlayerESP:toggleRays()
     end
     if self.rayToggleButton then
         self.rayToggleButton.Text = self.showRays and "射线: 开启" or "射线: 关闭"
-        self:tweenButton(self.rayToggleButton, self.showRays and Color3.fromRGB(0, 160, 130) or Color3.fromRGB(160, 0, 70))
+        self:tweenButton(self.rayToggleButton, self.showRays and Color3.fromRGB(99, 102, 241) or Color3.fromRGB(239, 68, 68))
     end
 end
 
@@ -1778,7 +1808,7 @@ function PlayerESP:toggleBoxes()
     end
     if self.boxToggleButton then
         self.boxToggleButton.Text = self.showBoxes and "方框: 开启" or "方框: 关闭"
-        self:tweenButton(self.boxToggleButton, self.showBoxes and Color3.fromRGB(120, 0, 180) or Color3.fromRGB(160, 0, 70))
+        self:tweenButton(self.boxToggleButton, self.showBoxes and Color3.fromRGB(139, 92, 246) or Color3.fromRGB(239, 68, 68))
     end
 end
 
@@ -1786,7 +1816,7 @@ function PlayerESP:toggleWallCheck()
     self.wallCheck = not self.wallCheck
     if self.wallCheckButton then
         self.wallCheckButton.Text = "墙体检测: " .. (self.wallCheck and "开启" or "关闭")
-        self:tweenButton(self.wallCheckButton, self.wallCheck and Color3.fromRGB(0, 160, 130) or Color3.fromRGB(160, 0, 70))
+        self:tweenButton(self.wallCheckButton, self.wallCheck and Color3.fromRGB(34, 197, 94) or Color3.fromRGB(239, 68, 68))
     end
 end
 
@@ -1794,7 +1824,7 @@ function PlayerESP:toggleTeamCheck()
     self.teamCheck = not self.teamCheck
     if self.teamCheckButton then
         self.teamCheckButton.Text = "队伍区分: " .. (self.teamCheck and "开启" or "关闭")
-        self:tweenButton(self.teamCheckButton, self.teamCheck and Color3.fromRGB(0, 160, 130) or Color3.fromRGB(160, 0, 70))
+        self:tweenButton(self.teamCheckButton, self.teamCheck and Color3.fromRGB(34, 197, 94) or Color3.fromRGB(239, 68, 68))
     end
 end
 
@@ -1806,21 +1836,21 @@ function PlayerESP:toggleUI()
         self.collapsedFrame.Visible = false
         
         -- 从小变大动画
-        local startSize = UDim2.new(0, 100, 0, 100)
-        local targetSize = UDim2.new(0, 280, 0, 420)
+        local startSize = UDim2.new(0, 150, 0, 150)
+        local targetSize = UDim2.new(0, 360, 0, 520)
         self.mainFrame.Size = startSize
         self:tweenFrame(self.mainFrame, targetSize, nil, 0.3)
     else
         -- 折叠：先缩小动画，再隐藏
-        local targetSize = UDim2.new(0, 50, 0, 50)
+        local targetSize = UDim2.new(0, 80, 0, 80)
         local tween = self:tweenFrame(self.mainFrame, targetSize, nil, 0.2)
         
         tween.Completed:Connect(function()
             self.mainFrame.Visible = false
             self.collapsedFrame.Visible = true
             -- 折叠按钮弹出动画
-            self.collapsedFrame.Size = UDim2.new(0, 30, 0, 30)
-            self:tweenFrame(self.collapsedFrame, UDim2.new(0, 50, 0, 50), nil, 0.2)
+            self.collapsedFrame.Size = UDim2.new(0, 40, 0, 40)
+            self:tweenFrame(self.collapsedFrame, UDim2.new(0, 64, 0, 64), nil, 0.2)
         end)
     end
 end
@@ -1950,70 +1980,113 @@ function PlayerESP:createUI()
     self.screenGui.ResetOnSpawn = false
     self.screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
-    -- 主框架 (霓虹赛博朋克风格)
+    -- 主框架 (现代风格)
     self.mainFrame = Instance.new("Frame")
-    self.mainFrame.Size = UDim2.new(0, 280, 0, 420)
-    self.mainFrame.Position = UDim2.new(0, 10, 0, 10)
-    self.mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)  -- 深蓝黑色背景
-    self.mainFrame.BorderSizePixel = 2
-    self.mainFrame.BorderColor3 = Color3.fromRGB(0, 255, 255)  -- 霓虹青色边框
+    self.mainFrame.Size = UDim2.new(0, 360, 0, 520)
+    self.mainFrame.Position = UDim2.new(0, 20, 0, 20)
+    self.mainFrame.BackgroundColor3 = Color3.fromRGB(24, 24, 32)
+    self.mainFrame.BorderSizePixel = 0
     self.mainFrame.ClipsDescendants = true
     self.mainFrame.Parent = self.screenGui
     
+    -- 圆角
     local mainCorner = Instance.new("UICorner")
-    mainCorner.CornerRadius = UDim.new(0, 8)
+    mainCorner.CornerRadius = UDim.new(0, 16)
     mainCorner.Parent = self.mainFrame
+    
+    -- 阴影效果容器
+    local shadow = Instance.new("Frame")
+    shadow.Size = UDim2.new(1, 12, 1, 12)
+    shadow.Position = UDim2.new(0, -6, 0, -6)
+    shadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    shadow.BackgroundTransparency = 0.85
+    shadow.ZIndex = 0
+    shadow.Parent = self.mainFrame
+    
+    local shadowCorner = Instance.new("UICorner")
+    shadowCorner.CornerRadius = UDim.new(0, 18)
+    shadowCorner.Parent = shadow
 
     -- 标题栏
     local titleBar = Instance.new("Frame")
-    titleBar.Size = UDim2.new(1, 0, 0, 35)
-    titleBar.BackgroundColor3 = Color3.fromRGB(20, 20, 35)  -- 深色
+    titleBar.Size = UDim2.new(1, 0, 0, 56)
+    titleBar.BackgroundColor3 = Color3.fromRGB(32, 32, 44)
     titleBar.BorderSizePixel = 0
+    titleBar.ZIndex = 2
     titleBar.Parent = self.mainFrame
     
     local titleCorner = Instance.new("UICorner")
-    titleCorner.CornerRadius = UDim.new(0, 8)
+    titleCorner.CornerRadius = UDim.new(0, 16)
     titleCorner.Parent = titleBar
+    
+    -- 图标
+    local iconFrame = Instance.new("Frame")
+    iconFrame.Size = UDim2.new(0, 32, 0, 32)
+    iconFrame.Position = UDim2.new(0, 16, 0.5, -16)
+    iconFrame.BackgroundColor3 = Color3.fromRGB(99, 102, 241)
+    iconFrame.ZIndex = 3
+    iconFrame.Parent = titleBar
+    
+    local iconCorner = Instance.new("UICorner")
+    iconCorner.CornerRadius = UDim.new(0, 10)
+    iconCorner.Parent = iconFrame
+    
+    local iconLabel = Instance.new("TextLabel")
+    iconLabel.Size = UDim2.new(1, 0, 1, 0)
+    iconLabel.BackgroundTransparency = 1
+    iconLabel.Text = "⚡"
+    iconLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    iconLabel.TextSize = 18
+    iconLabel.Font = Enum.Font.GothamBold
+    iconLabel.ZIndex = 4
+    iconLabel.Parent = iconFrame
 
     local titleLabel = Instance.new("TextLabel")
-    titleLabel.Size = UDim2.new(0.6, 0, 1, 0)
-    titleLabel.Position = UDim2.new(0, 10, 0, 0)
+    titleLabel.Size = UDim2.new(0.5, 0, 1, 0)
+    titleLabel.Position = UDim2.new(0, 58, 0, 0)
     titleLabel.BackgroundTransparency = 1
-    titleLabel.Text = "⚡ ESP 控制面板"
-    titleLabel.TextColor3 = Color3.fromRGB(0, 255, 255)  -- 霓虹青色
-    titleLabel.TextSize = 14
-    titleLabel.Font = Enum.Font.SourceSansBold
+    titleLabel.Text = "ESP 控制面板"
+    titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    titleLabel.TextSize = 18
+    titleLabel.Font = Enum.Font.GothamBold
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    titleLabel.ZIndex = 3
     titleLabel.Parent = titleBar
 
     local collapseButton = Instance.new("TextButton")
-    collapseButton.Size = UDim2.new(0, 25, 0, 25)
-    collapseButton.Position = UDim2.new(1, -30, 0, 5)
-    collapseButton.BackgroundColor3 = Color3.fromRGB(255, 0, 128)  -- 霓虹品红
+    collapseButton.Size = UDim2.new(0, 36, 0, 36)
+    collapseButton.Position = UDim2.new(1, -52, 0.5, -18)
+    collapseButton.BackgroundColor3 = Color3.fromRGB(64, 64, 82)
     collapseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    collapseButton.Text = "-"
-    collapseButton.Font = Enum.Font.SourceSansBold
-    collapseButton.TextSize = 16
+    collapseButton.Text = "−"
+    collapseButton.Font = Enum.Font.GothamBold
+    collapseButton.TextSize = 24
+    collapseButton.ZIndex = 3
     collapseButton.Parent = titleBar
     
     local collapseCorner = Instance.new("UICorner")
-    collapseCorner.CornerRadius = UDim.new(0, 4)
+    collapseCorner.CornerRadius = UDim.new(0, 12)
     collapseCorner.Parent = collapseButton
 
     -- Tab 栏
     local tabBar = Instance.new("Frame")
-    tabBar.Size = UDim2.new(1, 0, 0, 35)
-    tabBar.Position = UDim2.new(0, 0, 0, 35)
-    tabBar.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+    tabBar.Size = UDim2.new(1, -32, 0, 44)
+    tabBar.Position = UDim2.new(0, 16, 0, 68)
+    tabBar.BackgroundColor3 = Color3.fromRGB(32, 32, 44)
     tabBar.BorderSizePixel = 0
+    tabBar.ZIndex = 2
     tabBar.Parent = self.mainFrame
+    
+    local tabBarCorner = Instance.new("UICorner")
+    tabBarCorner.CornerRadius = UDim.new(0, 12)
+    tabBarCorner.Parent = tabBar
 
     self.tabButtons = {}
     self.tabContents = {}
     
     local tabs = {{"ESP", "ESP"}, {"战斗", "Combat"}, {"辅助", "Misc"}, {"设置", "Settings"}}
     for i, tabInfo in ipairs(tabs) do
-        local btn = self:createTabButton(tabBar, tabInfo[1], tabInfo[2], UDim2.new((i-1) * 0.25, 2, 0, 5))
+        local btn = self:createTabButton(tabBar, tabInfo[1], tabInfo[2], UDim2.new((i-1) * 0.25, 0, 0, 4))
         btn.Name = tabInfo[2] .. "Tab"
         btn.Parent = tabBar
         self.tabButtons[tabInfo[2]] = btn
@@ -2025,43 +2098,47 @@ function PlayerESP:createUI()
 
     -- 内容区域
     local contentFrame = Instance.new("Frame")
-    contentFrame.Size = UDim2.new(1, 0, 1, -105)
-    contentFrame.Position = UDim2.new(0, 0, 0, 70)
+    contentFrame.Size = UDim2.new(1, -32, 1, -140)
+    contentFrame.Position = UDim2.new(0, 16, 0, 120)
     contentFrame.BackgroundTransparency = 1
+    contentFrame.ZIndex = 2
     contentFrame.Parent = self.mainFrame
 
     -- 状态栏
     local statusBarFrame = Instance.new("Frame")
-    statusBarFrame.Size = UDim2.new(1, 0, 0, 35)
-    statusBarFrame.Position = UDim2.new(0, 0, 1, -35)
-    statusBarFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    statusBarFrame.Size = UDim2.new(1, -32, 0, 52)
+    statusBarFrame.Position = UDim2.new(0, 16, 1, -68)
+    statusBarFrame.BackgroundColor3 = Color3.fromRGB(32, 32, 44)
     statusBarFrame.BorderSizePixel = 0
+    statusBarFrame.ZIndex = 2
     statusBarFrame.Parent = self.mainFrame
     
     local statusCorner = Instance.new("UICorner")
-    statusCorner.CornerRadius = UDim.new(0, 8)
+    statusCorner.CornerRadius = UDim.new(0, 12)
     statusCorner.Parent = statusBarFrame
 
     self.targetStatusLabel = Instance.new("TextLabel")
-    self.targetStatusLabel.Size = UDim2.new(0.5, -10, 0, 15)
-    self.targetStatusLabel.Position = UDim2.new(0, 10, 0, 3)
+    self.targetStatusLabel.Size = UDim2.new(1, -24, 0, 20)
+    self.targetStatusLabel.Position = UDim2.new(0, 12, 0, 6)
     self.targetStatusLabel.BackgroundTransparency = 1
     self.targetStatusLabel.Text = "无目标"
-    self.targetStatusLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
-    self.targetStatusLabel.TextSize = 11
-    self.targetStatusLabel.Font = Enum.Font.SourceSans
+    self.targetStatusLabel.TextColor3 = Color3.fromRGB(148, 163, 184)
+    self.targetStatusLabel.TextSize = 13
+    self.targetStatusLabel.Font = Enum.Font.Gotham
     self.targetStatusLabel.TextXAlignment = Enum.TextXAlignment.Left
+    self.targetStatusLabel.ZIndex = 3
     self.targetStatusLabel.Parent = statusBarFrame
 
     self.statusBar = Instance.new("TextLabel")
-    self.statusBar.Size = UDim2.new(1, -20, 0, 15)
-    self.statusBar.Position = UDim2.new(0, 10, 0, 18)
+    self.statusBar.Size = UDim2.new(1, -24, 0, 18)
+    self.statusBar.Position = UDim2.new(0, 12, 0, 28)
     self.statusBar.BackgroundTransparency = 1
     self.statusBar.Text = "就绪"
-    self.statusBar.TextColor3 = Color3.fromRGB(200, 200, 200)
-    self.statusBar.TextSize = 10
-    self.statusBar.Font = Enum.Font.SourceSans
+    self.statusBar.TextColor3 = Color3.fromRGB(74, 222, 128)
+    self.statusBar.TextSize = 12
+    self.statusBar.Font = Enum.Font.Gotham
     self.statusBar.TextXAlignment = Enum.TextXAlignment.Left
+    self.statusBar.ZIndex = 3
     self.statusBar.Parent = statusBarFrame
 
     -- ========== ESP Tab ==========
@@ -2070,91 +2147,108 @@ function PlayerESP:createUI()
     espTab.Size = UDim2.new(1, 0, 1, 0)
     espTab.BackgroundTransparency = 1
     espTab.BorderSizePixel = 0
-    espTab.ScrollBarThickness = 6
-    espTab.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
+    espTab.ScrollBarThickness = 4
+    espTab.ScrollBarImageColor3 = Color3.fromRGB(75, 85, 99)
     espTab.AutomaticCanvasSize = Enum.AutomaticSize.Y
     espTab.CanvasSize = UDim2.new(0, 0, 0, 0)
     espTab.Visible = true
+    espTab.ZIndex = 2
     espTab.Parent = contentFrame
     self.tabContents["ESP"] = espTab
 
     local espLayout = Instance.new("UIListLayout")
-    espLayout.Padding = UDim.new(0, 6)
+    espLayout.Padding = UDim.new(0, 12)
     espLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
     espLayout.SortOrder = Enum.SortOrder.LayoutOrder
     espLayout.Parent = espTab
 
     local espPadding = Instance.new("UIPadding")
-    espPadding.PaddingTop = UDim.new(0, 8)
-    espPadding.PaddingBottom = UDim.new(0, 8)
+    espPadding.PaddingTop = UDim.new(0, 4)
+    espPadding.PaddingBottom = UDim.new(0, 4)
     espPadding.Parent = espTab
 
     -- ESP 开关
     self.toggleButton = Instance.new("TextButton")
-    self.toggleButton.Size = UDim2.new(0.9, 0, 0, 30)
-    self.toggleButton.BackgroundColor3 = Color3.fromRGB(0, 160, 130)
+    self.toggleButton.Size = UDim2.new(1, 0, 0, 48)
+    self.toggleButton.BackgroundColor3 = Color3.fromRGB(99, 102, 241)
     self.toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     self.toggleButton.Text = "标签: 开启"
-    self.toggleButton.Font = Enum.Font.SourceSansBold
-    self.toggleButton.TextSize = 13
+    self.toggleButton.Font = Enum.Font.GothamBold
+    self.toggleButton.TextSize = 15
     self.toggleButton.LayoutOrder = 1
+    self.toggleButton.ZIndex = 3
     self.toggleButton.Parent = espTab
-    Instance.new("UICorner", self.toggleButton).CornerRadius = UDim.new(0, 6)
+    local toggleBtnCorner = Instance.new("UICorner")
+    toggleBtnCorner.CornerRadius = UDim.new(0, 12)
+    toggleBtnCorner.Parent = self.toggleButton
 
     self.rayToggleButton = Instance.new("TextButton")
-    self.rayToggleButton.Size = UDim2.new(0.9, 0, 0, 30)
-    self.rayToggleButton.BackgroundColor3 = Color3.fromRGB(0, 160, 130)
+    self.rayToggleButton.Size = UDim2.new(1, 0, 0, 48)
+    self.rayToggleButton.BackgroundColor3 = Color3.fromRGB(99, 102, 241)
     self.rayToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     self.rayToggleButton.Text = "射线: 开启"
-    self.rayToggleButton.Font = Enum.Font.SourceSansBold
-    self.rayToggleButton.TextSize = 13
+    self.rayToggleButton.Font = Enum.Font.GothamBold
+    self.rayToggleButton.TextSize = 15
     self.rayToggleButton.LayoutOrder = 2
+    self.rayToggleButton.ZIndex = 3
     self.rayToggleButton.Parent = espTab
-    Instance.new("UICorner", self.rayToggleButton).CornerRadius = UDim.new(0, 6)
+    local rayBtnCorner = Instance.new("UICorner")
+    rayBtnCorner.CornerRadius = UDim.new(0, 12)
+    rayBtnCorner.Parent = self.rayToggleButton
 
     self.boxToggleButton = Instance.new("TextButton")
-    self.boxToggleButton.Size = UDim2.new(0.9, 0, 0, 30)
-    self.boxToggleButton.BackgroundColor3 = Color3.fromRGB(120, 0, 180)
+    self.boxToggleButton.Size = UDim2.new(1, 0, 0, 48)
+    self.boxToggleButton.BackgroundColor3 = Color3.fromRGB(139, 92, 246)
     self.boxToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     self.boxToggleButton.Text = "方框: 开启"
-    self.boxToggleButton.Font = Enum.Font.SourceSansBold
-    self.boxToggleButton.TextSize = 13
+    self.boxToggleButton.Font = Enum.Font.GothamBold
+    self.boxToggleButton.TextSize = 15
     self.boxToggleButton.LayoutOrder = 3
+    self.boxToggleButton.ZIndex = 3
     self.boxToggleButton.Parent = espTab
-    Instance.new("UICorner", self.boxToggleButton).CornerRadius = UDim.new(0, 6)
+    local boxBtnCorner = Instance.new("UICorner")
+    boxBtnCorner.CornerRadius = UDim.new(0, 12)
+    boxBtnCorner.Parent = self.boxToggleButton
 
     self.healthBarToggleBtn = Instance.new("TextButton")
-    self.healthBarToggleBtn.Size = UDim2.new(0.9, 0, 0, 30)
-    self.healthBarToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 160, 130)
+    self.healthBarToggleBtn.Size = UDim2.new(1, 0, 0, 48)
+    self.healthBarToggleBtn.BackgroundColor3 = Color3.fromRGB(99, 102, 241)
     self.healthBarToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     self.healthBarToggleBtn.Text = "血量条: 开启"
-    self.healthBarToggleBtn.Font = Enum.Font.SourceSansBold
-    self.healthBarToggleBtn.TextSize = 13
+    self.healthBarToggleBtn.Font = Enum.Font.GothamBold
+    self.healthBarToggleBtn.TextSize = 15
     self.healthBarToggleBtn.LayoutOrder = 4
+    self.healthBarToggleBtn.ZIndex = 3
     self.healthBarToggleBtn.Parent = espTab
-    Instance.new("UICorner", self.healthBarToggleBtn).CornerRadius = UDim.new(0, 6)
+    local healthBtnCorner = Instance.new("UICorner")
+    healthBtnCorner.CornerRadius = UDim.new(0, 12)
+    healthBtnCorner.Parent = self.healthBarToggleBtn
 
     self.headCircleToggleBtn = Instance.new("TextButton")
-    self.headCircleToggleBtn.Size = UDim2.new(0.9, 0, 0, 30)
-    self.headCircleToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 160, 130)
+    self.headCircleToggleBtn.Size = UDim2.new(1, 0, 0, 48)
+    self.headCircleToggleBtn.BackgroundColor3 = Color3.fromRGB(99, 102, 241)
     self.headCircleToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     self.headCircleToggleBtn.Text = "头部圆圈: 开启"
-    self.headCircleToggleBtn.Font = Enum.Font.SourceSansBold
-    self.headCircleToggleBtn.TextSize = 13
+    self.headCircleToggleBtn.Font = Enum.Font.GothamBold
+    self.headCircleToggleBtn.TextSize = 15
     self.headCircleToggleBtn.LayoutOrder = 5
+    self.headCircleToggleBtn.ZIndex = 3
     self.headCircleToggleBtn.Parent = espTab
-    Instance.new("UICorner", self.headCircleToggleBtn).CornerRadius = UDim.new(0, 6)
+    local headCircleBtnCorner = Instance.new("UICorner")
+    headCircleBtnCorner.CornerRadius = UDim.new(0, 12)
+    headCircleBtnCorner.Parent = self.headCircleToggleBtn
 
     -- 颜色设置
     local colorSection = Instance.new("TextLabel")
-    colorSection.Size = UDim2.new(0.9, 0, 0, 18)
+    colorSection.Size = UDim2.new(1, 0, 0, 24)
     colorSection.BackgroundTransparency = 1
     colorSection.Text = "颜色设置"
-    colorSection.TextColor3 = Color3.fromRGB(255, 255, 255)
-    colorSection.TextSize = 13
-    colorSection.Font = Enum.Font.SourceSansBold
+    colorSection.TextColor3 = Color3.fromRGB(226, 232, 240)
+    colorSection.TextSize = 16
+    colorSection.Font = Enum.Font.GothamBold
     colorSection.TextXAlignment = Enum.TextXAlignment.Left
     colorSection.LayoutOrder = 6
+    colorSection.ZIndex = 3
     colorSection.Parent = espTab
 
     local labelColorFrame = self:createColorPicker(espTab, self.colors.label, "标签", function(color)
@@ -2181,15 +2275,18 @@ function PlayerESP:createUI()
     headCircleColorFrame.LayoutOrder = 10
 
     local teamToggle = Instance.new("TextButton")
-    teamToggle.Size = UDim2.new(0.9, 0, 0, 26)
-    teamToggle.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+    teamToggle.Size = UDim2.new(1, 0, 0, 40)
+    teamToggle.BackgroundColor3 = Color3.fromRGB(51, 65, 85)
     teamToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
     teamToggle.Text = "队伍颜色: 关闭"
-    teamToggle.Font = Enum.Font.SourceSans
-    teamToggle.TextSize = 12
+    teamToggle.Font = Enum.Font.Gotham
+    teamToggle.TextSize = 14
     teamToggle.LayoutOrder = 11
+    teamToggle.ZIndex = 3
     teamToggle.Parent = espTab
-    Instance.new("UICorner", teamToggle).CornerRadius = UDim.new(0, 4)
+    local teamBtnCorner = Instance.new("UICorner")
+    teamBtnCorner.CornerRadius = UDim.new(0, 10)
+    teamBtnCorner.Parent = teamToggle
 
     -- ========== Combat Tab ==========
     local combatTab = Instance.new("ScrollingFrame")
@@ -2197,102 +2294,122 @@ function PlayerESP:createUI()
     combatTab.Size = UDim2.new(1, 0, 1, 0)
     combatTab.BackgroundTransparency = 1
     combatTab.BorderSizePixel = 0
-    combatTab.ScrollBarThickness = 6
-    combatTab.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
+    combatTab.ScrollBarThickness = 4
+    combatTab.ScrollBarImageColor3 = Color3.fromRGB(75, 85, 99)
     combatTab.AutomaticCanvasSize = Enum.AutomaticSize.Y
     combatTab.CanvasSize = UDim2.new(0, 0, 0, 0)
     combatTab.Visible = false
+    combatTab.ZIndex = 2
     combatTab.Parent = contentFrame
     self.tabContents["Combat"] = combatTab
 
     local combatLayout = Instance.new("UIListLayout")
-    combatLayout.Padding = UDim.new(0, 6)
+    combatLayout.Padding = UDim.new(0, 12)
     combatLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
     combatLayout.SortOrder = Enum.SortOrder.LayoutOrder
     combatLayout.Parent = combatTab
 
     local combatPadding = Instance.new("UIPadding")
-    combatPadding.PaddingTop = UDim.new(0, 8)
-    combatPadding.PaddingBottom = UDim.new(0, 8)
+    combatPadding.PaddingTop = UDim.new(0, 4)
+    combatPadding.PaddingBottom = UDim.new(0, 4)
     combatPadding.Parent = combatTab
 
     self.aimbotToggleButton = Instance.new("TextButton")
-    self.aimbotToggleButton.Size = UDim2.new(0.9, 0, 0, 32)
-    self.aimbotToggleButton.BackgroundColor3 = Color3.fromRGB(160, 0, 70)
+    self.aimbotToggleButton.Size = UDim2.new(1, 0, 0, 48)
+    self.aimbotToggleButton.BackgroundColor3 = Color3.fromRGB(239, 68, 68)
     self.aimbotToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     self.aimbotToggleButton.Text = "自瞄: 关闭"
-    self.aimbotToggleButton.Font = Enum.Font.SourceSansBold
-    self.aimbotToggleButton.TextSize = 13
+    self.aimbotToggleButton.Font = Enum.Font.GothamBold
+    self.aimbotToggleButton.TextSize = 15
     self.aimbotToggleButton.LayoutOrder = 1
+    self.aimbotToggleButton.ZIndex = 3
     self.aimbotToggleButton.Parent = combatTab
-    Instance.new("UICorner", self.aimbotToggleButton).CornerRadius = UDim.new(0, 6)
+    local aimbotBtnCorner = Instance.new("UICorner")
+    aimbotBtnCorner.CornerRadius = UDim.new(0, 12)
+    aimbotBtnCorner.Parent = self.aimbotToggleButton
 
     self.triggerbotToggleButton = Instance.new("TextButton")
-    self.triggerbotToggleButton.Size = UDim2.new(0.9, 0, 0, 32)
-    self.triggerbotToggleButton.BackgroundColor3 = Color3.fromRGB(160, 0, 70)
+    self.triggerbotToggleButton.Size = UDim2.new(1, 0, 0, 48)
+    self.triggerbotToggleButton.BackgroundColor3 = Color3.fromRGB(239, 68, 68)
     self.triggerbotToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     self.triggerbotToggleButton.Text = "扳机: 关闭"
-    self.triggerbotToggleButton.Font = Enum.Font.SourceSansBold
-    self.triggerbotToggleButton.TextSize = 13
+    self.triggerbotToggleButton.Font = Enum.Font.GothamBold
+    self.triggerbotToggleButton.TextSize = 15
     self.triggerbotToggleButton.LayoutOrder = 2
+    self.triggerbotToggleButton.ZIndex = 3
     self.triggerbotToggleButton.Parent = combatTab
-    Instance.new("UICorner", self.triggerbotToggleButton).CornerRadius = UDim.new(0, 6)
+    local triggerBtnCorner = Instance.new("UICorner")
+    triggerBtnCorner.CornerRadius = UDim.new(0, 12)
+    triggerBtnCorner.Parent = self.triggerbotToggleButton
 
     self.wallCheckButton = Instance.new("TextButton")
-    self.wallCheckButton.Size = UDim2.new(0.9, 0, 0, 26)
-    self.wallCheckButton.BackgroundColor3 = Color3.fromRGB(0, 160, 130)
+    self.wallCheckButton.Size = UDim2.new(1, 0, 0, 40)
+    self.wallCheckButton.BackgroundColor3 = Color3.fromRGB(34, 197, 94)
     self.wallCheckButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     self.wallCheckButton.Text = "墙体检测: 开启"
-    self.wallCheckButton.Font = Enum.Font.SourceSans
-    self.wallCheckButton.TextSize = 12
+    self.wallCheckButton.Font = Enum.Font.Gotham
+    self.wallCheckButton.TextSize = 14
     self.wallCheckButton.LayoutOrder = 3
+    self.wallCheckButton.ZIndex = 3
     self.wallCheckButton.Parent = combatTab
-    Instance.new("UICorner", self.wallCheckButton).CornerRadius = UDim.new(0, 4)
+    local wallBtnCorner = Instance.new("UICorner")
+    wallBtnCorner.CornerRadius = UDim.new(0, 10)
+    wallBtnCorner.Parent = self.wallCheckButton
 
     self.teamCheckButton = Instance.new("TextButton")
-    self.teamCheckButton.Size = UDim2.new(0.9, 0, 0, 26)
-    self.teamCheckButton.BackgroundColor3 = Color3.fromRGB(0, 160, 130)
+    self.teamCheckButton.Size = UDim2.new(1, 0, 0, 40)
+    self.teamCheckButton.BackgroundColor3 = Color3.fromRGB(34, 197, 94)
     self.teamCheckButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     self.teamCheckButton.Text = "队伍区分: 开启"
-    self.teamCheckButton.Font = Enum.Font.SourceSans
-    self.teamCheckButton.TextSize = 12
+    self.teamCheckButton.Font = Enum.Font.Gotham
+    self.teamCheckButton.TextSize = 14
     self.teamCheckButton.LayoutOrder = 4
+    self.teamCheckButton.ZIndex = 3
     self.teamCheckButton.Parent = combatTab
-    Instance.new("UICorner", self.teamCheckButton).CornerRadius = UDim.new(0, 4)
+    local teamBtnCorner = Instance.new("UICorner")
+    teamBtnCorner.CornerRadius = UDim.new(0, 10)
+    teamBtnCorner.Parent = self.teamCheckButton
 
     self.fovCircleToggleBtn = Instance.new("TextButton")
-    self.fovCircleToggleBtn.Size = UDim2.new(0.9, 0, 0, 26)
-    self.fovCircleToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 160, 130)
+    self.fovCircleToggleBtn.Size = UDim2.new(1, 0, 0, 40)
+    self.fovCircleToggleBtn.BackgroundColor3 = Color3.fromRGB(34, 197, 94)
     self.fovCircleToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     self.fovCircleToggleBtn.Text = "FOV圈: 开启"
-    self.fovCircleToggleBtn.Font = Enum.Font.SourceSans
-    self.fovCircleToggleBtn.TextSize = 12
+    self.fovCircleToggleBtn.Font = Enum.Font.Gotham
+    self.fovCircleToggleBtn.TextSize = 14
     self.fovCircleToggleBtn.LayoutOrder = 5
+    self.fovCircleToggleBtn.ZIndex = 3
     self.fovCircleToggleBtn.Parent = combatTab
-    Instance.new("UICorner", self.fovCircleToggleBtn).CornerRadius = UDim.new(0, 4)
+    local fovBtnCorner = Instance.new("UICorner")
+    fovBtnCorner.CornerRadius = UDim.new(0, 10)
+    fovBtnCorner.Parent = self.fovCircleToggleBtn
 
     -- 扳机设置
     local triggerSettingsLabel = Instance.new("TextLabel")
-    triggerSettingsLabel.Size = UDim2.new(0.9, 0, 0, 18)
+    triggerSettingsLabel.Size = UDim2.new(1, 0, 0, 24)
     triggerSettingsLabel.BackgroundTransparency = 1
     triggerSettingsLabel.Text = "扳机设置"
-    triggerSettingsLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    triggerSettingsLabel.TextSize = 13
-    triggerSettingsLabel.Font = Enum.Font.SourceSansBold
+    triggerSettingsLabel.TextColor3 = Color3.fromRGB(226, 232, 240)
+    triggerSettingsLabel.TextSize = 16
+    triggerSettingsLabel.Font = Enum.Font.GothamBold
     triggerSettingsLabel.TextXAlignment = Enum.TextXAlignment.Left
     triggerSettingsLabel.LayoutOrder = 6
+    triggerSettingsLabel.ZIndex = 3
     triggerSettingsLabel.Parent = combatTab
 
     self.triggerHeadOnlyBtn = Instance.new("TextButton")
-    self.triggerHeadOnlyBtn.Size = UDim2.new(0.9, 0, 0, 26)
-    self.triggerHeadOnlyBtn.BackgroundColor3 = self.triggerbotHeadOnly and Color3.fromRGB(0, 160, 130) or Color3.fromRGB(80, 80, 80)
+    self.triggerHeadOnlyBtn.Size = UDim2.new(1, 0, 0, 40)
+    self.triggerHeadOnlyBtn.BackgroundColor3 = self.triggerbotHeadOnly and Color3.fromRGB(34, 197, 94) or Color3.fromRGB(51, 65, 85)
     self.triggerHeadOnlyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     self.triggerHeadOnlyBtn.Text = "仅头部触发: " .. (self.triggerbotHeadOnly and "开启" or "关闭")
-    self.triggerHeadOnlyBtn.Font = Enum.Font.SourceSans
-    self.triggerHeadOnlyBtn.TextSize = 12
+    self.triggerHeadOnlyBtn.Font = Enum.Font.Gotham
+    self.triggerHeadOnlyBtn.TextSize = 14
     self.triggerHeadOnlyBtn.LayoutOrder = 7
+    self.triggerHeadOnlyBtn.ZIndex = 3
     self.triggerHeadOnlyBtn.Parent = combatTab
-    Instance.new("UICorner", self.triggerHeadOnlyBtn).CornerRadius = UDim.new(0, 4)
+    local headOnlyBtnCorner = Instance.new("UICorner")
+    headOnlyBtnCorner.CornerRadius = UDim.new(0, 10)
+    headOnlyBtnCorner.Parent = self.triggerHeadOnlyBtn
 
     -- 触发延迟 (文本输入)
     local triggerDelayInput = self:createParamInput(combatTab, "触发延迟(ms)", self.triggerbotDelay, 0, 500, function(value)
@@ -2308,57 +2425,61 @@ function PlayerESP:createUI()
 
     -- 自瞄参数
     local aimbotSettingsLabel = Instance.new("TextLabel")
-    aimbotSettingsLabel.Size = UDim2.new(0.9, 0, 0, 18)
+    aimbotSettingsLabel.Size = UDim2.new(1, 0, 0, 24)
     aimbotSettingsLabel.BackgroundTransparency = 1
     aimbotSettingsLabel.Text = "自瞄参数"
-    aimbotSettingsLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    aimbotSettingsLabel.TextSize = 13
-    aimbotSettingsLabel.Font = Enum.Font.SourceSansBold
+    aimbotSettingsLabel.TextColor3 = Color3.fromRGB(226, 232, 240)
+    aimbotSettingsLabel.TextSize = 16
+    aimbotSettingsLabel.Font = Enum.Font.GothamBold
     aimbotSettingsLabel.TextXAlignment = Enum.TextXAlignment.Left
-    aimbotSettingsLabel.LayoutOrder = 9
+    aimbotSettingsLabel.LayoutOrder = 10
+    aimbotSettingsLabel.ZIndex = 3
     aimbotSettingsLabel.Parent = combatTab
 
     -- 平滑度 (文本输入)
     local smoothnessInput = self:createParamInput(combatTab, "平滑度", self.aimbotSmoothness, 1, 20, function(value)
         self.aimbotSmoothness = value
     end, false)
-    smoothnessInput.LayoutOrder = 10
+    smoothnessInput.LayoutOrder = 11
 
     -- 预测强度 (文本输入)
     local predictionInput = self:createParamInput(combatTab, "移动预测", self.aimbotPrediction, 0, 2, function(value)
         self.aimbotPrediction = value
     end, false)
-    predictionInput.LayoutOrder = 11
+    predictionInput.LayoutOrder = 12
 
     -- 范围 (文本输入)
     local rangeInput = self:createParamInput(combatTab, "自瞄范围", self.aimbotRange, 50, 500, function(value)
         self.aimbotRange = value
     end, true)
-    rangeInput.LayoutOrder = 12
+    rangeInput.LayoutOrder = 13
 
     -- FOV (文本输入)
     local fovInput = self:createParamInput(combatTab, "自瞄FOV", self.aimbotFov, 30, 360, function(value)
         self.aimbotFov = value
     end, true)
-    fovInput.LayoutOrder = 13
+    fovInput.LayoutOrder = 14
 
     -- 瞄地面功能开关按钮
     self.groundAimToggleBtn = Instance.new("TextButton")
-    self.groundAimToggleBtn.Size = UDim2.new(0.9, 0, 0, 32)
-    self.groundAimToggleBtn.BackgroundColor3 = self.aimbotGroundAimEnabled and Color3.fromRGB(0, 160, 130) or Color3.fromRGB(160, 0, 70)
+    self.groundAimToggleBtn.Size = UDim2.new(1, 0, 0, 48)
+    self.groundAimToggleBtn.BackgroundColor3 = self.aimbotGroundAimEnabled and Color3.fromRGB(34, 197, 94) or Color3.fromRGB(239, 68, 68)
     self.groundAimToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     self.groundAimToggleBtn.Text = "瞄地面: " .. (self.aimbotGroundAimEnabled and "开启" or "关闭")
-    self.groundAimToggleBtn.Font = Enum.Font.SourceSansBold
-    self.groundAimToggleBtn.TextSize = 13
-    self.groundAimToggleBtn.LayoutOrder = 14
+    self.groundAimToggleBtn.Font = Enum.Font.GothamBold
+    self.groundAimToggleBtn.TextSize = 15
+    self.groundAimToggleBtn.LayoutOrder = 15
+    self.groundAimToggleBtn.ZIndex = 3
     self.groundAimToggleBtn.Parent = combatTab
-    Instance.new("UICorner", self.groundAimToggleBtn).CornerRadius = UDim.new(0, 6)
+    local groundBtnCorner = Instance.new("UICorner")
+    groundBtnCorner.CornerRadius = UDim.new(0, 12)
+    groundBtnCorner.Parent = self.groundAimToggleBtn
 
     -- 瞄地面时间参数 (文本输入)
     local groundAimTimeInput = self:createParamInput(combatTab, "瞄目标时间(秒)", self.aimbotGroundAimTime, 0.1, 5, function(value)
         self.aimbotGroundAimTime = value
     end, false)
-    groundAimTimeInput.LayoutOrder = 15
+    groundAimTimeInput.LayoutOrder = 16
 
     -- ========== Misc Tab ==========
     local miscTab = Instance.new("ScrollingFrame")
@@ -2366,35 +2487,39 @@ function PlayerESP:createUI()
     miscTab.Size = UDim2.new(1, 0, 1, 0)
     miscTab.BackgroundTransparency = 1
     miscTab.BorderSizePixel = 0
-    miscTab.ScrollBarThickness = 6
-    miscTab.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
+    miscTab.ScrollBarThickness = 4
+    miscTab.ScrollBarImageColor3 = Color3.fromRGB(75, 85, 99)
     miscTab.AutomaticCanvasSize = Enum.AutomaticSize.Y
     miscTab.CanvasSize = UDim2.new(0, 0, 0, 0)
     miscTab.Visible = false
+    miscTab.ZIndex = 2
     miscTab.Parent = contentFrame
     self.tabContents["Misc"] = miscTab
 
     local miscLayout = Instance.new("UIListLayout")
-    miscLayout.Padding = UDim.new(0, 6)
+    miscLayout.Padding = UDim.new(0, 12)
     miscLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
     miscLayout.SortOrder = Enum.SortOrder.LayoutOrder
     miscLayout.Parent = miscTab
 
     local miscPadding = Instance.new("UIPadding")
-    miscPadding.PaddingTop = UDim.new(0, 8)
-    miscPadding.PaddingBottom = UDim.new(0, 8)
+    miscPadding.PaddingTop = UDim.new(0, 4)
+    miscPadding.PaddingBottom = UDim.new(0, 4)
     miscPadding.Parent = miscTab
 
     self.flyToggleBtn = Instance.new("TextButton")
-    self.flyToggleBtn.Size = UDim2.new(0.9, 0, 0, 32)
-    self.flyToggleBtn.BackgroundColor3 = self.flyEnabled and Color3.fromRGB(0, 160, 130) or Color3.fromRGB(160, 0, 70)
+    self.flyToggleBtn.Size = UDim2.new(1, 0, 0, 48)
+    self.flyToggleBtn.BackgroundColor3 = self.flyEnabled and Color3.fromRGB(34, 197, 94) or Color3.fromRGB(239, 68, 68)
     self.flyToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     self.flyToggleBtn.Text = "飞行: " .. (self.flyEnabled and "开启" or "关闭")
-    self.flyToggleBtn.Font = Enum.Font.SourceSansBold
-    self.flyToggleBtn.TextSize = 13
+    self.flyToggleBtn.Font = Enum.Font.GothamBold
+    self.flyToggleBtn.TextSize = 15
     self.flyToggleBtn.LayoutOrder = 2
+    self.flyToggleBtn.ZIndex = 3
     self.flyToggleBtn.Parent = miscTab
-    Instance.new("UICorner", self.flyToggleBtn).CornerRadius = UDim.new(0, 6)
+    local flyBtnCorner = Instance.new("UICorner")
+    flyBtnCorner.CornerRadius = UDim.new(0, 12)
+    flyBtnCorner.Parent = self.flyToggleBtn
 
     -- 飞行速度 (文本输入)
     local flySpeedInput = self:createParamInput(miscTab, "飞行速度", self.flySpeed, 10, 200, function(value)
@@ -2404,103 +2529,120 @@ function PlayerESP:createUI()
 
     -- 强制第三人称按钮
     self.thirdPersonToggleBtn = Instance.new("TextButton")
-    self.thirdPersonToggleBtn.Size = UDim2.new(0.9, 0, 0, 32)
-    self.thirdPersonToggleBtn.BackgroundColor3 = self.forceThirdPerson and Color3.fromRGB(0, 160, 130) or Color3.fromRGB(160, 0, 70)
+    self.thirdPersonToggleBtn.Size = UDim2.new(1, 0, 0, 48)
+    self.thirdPersonToggleBtn.BackgroundColor3 = self.forceThirdPerson and Color3.fromRGB(34, 197, 94) or Color3.fromRGB(239, 68, 68)
     self.thirdPersonToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     self.thirdPersonToggleBtn.Text = "第三人称: " .. (self.forceThirdPerson and "开启" or "关闭")
-    self.thirdPersonToggleBtn.Font = Enum.Font.SourceSansBold
-    self.thirdPersonToggleBtn.TextSize = 13
+    self.thirdPersonToggleBtn.Font = Enum.Font.GothamBold
+    self.thirdPersonToggleBtn.TextSize = 15
     self.thirdPersonToggleBtn.LayoutOrder = 4
+    self.thirdPersonToggleBtn.ZIndex = 3
     self.thirdPersonToggleBtn.Parent = miscTab
-    Instance.new("UICorner", self.thirdPersonToggleBtn).CornerRadius = UDim.new(0, 6)
+    local thirdBtnCorner = Instance.new("UICorner")
+    thirdBtnCorner.CornerRadius = UDim.new(0, 12)
+    thirdBtnCorner.Parent = self.thirdPersonToggleBtn
 
     -- 坐头功能
     local sitSection = Instance.new("TextLabel")
-    sitSection.Size = UDim2.new(0.9, 0, 0, 18)
+    sitSection.Size = UDim2.new(1, 0, 0, 24)
     sitSection.BackgroundTransparency = 1
     sitSection.Text = "坐头功能"
-    sitSection.TextColor3 = Color3.fromRGB(255, 255, 255)
-    sitSection.TextSize = 13
-    sitSection.Font = Enum.Font.SourceSansBold
+    sitSection.TextColor3 = Color3.fromRGB(226, 232, 240)
+    sitSection.TextSize = 16
+    sitSection.Font = Enum.Font.GothamBold
     sitSection.TextXAlignment = Enum.TextXAlignment.Left
-    sitSection.LayoutOrder = 4
+    sitSection.LayoutOrder = 5
+    sitSection.ZIndex = 3
     sitSection.Parent = miscTab
 
     self.playerNameBox = Instance.new("TextBox")
-    self.playerNameBox.Size = UDim2.new(0.9, 0, 0, 28)
-    self.playerNameBox.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    self.playerNameBox.Size = UDim2.new(1, 0, 0, 44)
+    self.playerNameBox.BackgroundColor3 = Color3.fromRGB(51, 65, 85)
     self.playerNameBox.TextColor3 = Color3.fromRGB(255, 255, 255)
     self.playerNameBox.PlaceholderText = "输入玩家名"
     self.playerNameBox.Text = ""
-    self.playerNameBox.Font = Enum.Font.SourceSans
-    self.playerNameBox.TextSize = 13
-    self.playerNameBox.LayoutOrder = 5
+    self.playerNameBox.Font = Enum.Font.Gotham
+    self.playerNameBox.TextSize = 14
+    self.playerNameBox.LayoutOrder = 6
+    self.playerNameBox.ZIndex = 3
     self.playerNameBox.Parent = miscTab
-    Instance.new("UICorner", self.playerNameBox).CornerRadius = UDim.new(0, 4)
+    local nameCorner = Instance.new("UICorner")
+    nameCorner.CornerRadius = UDim.new(0, 10)
+    nameCorner.Parent = self.playerNameBox
 
     local playerListContainer = Instance.new("Frame")
-    playerListContainer.Size = UDim2.new(0.9, 0, 0, 100)
+    playerListContainer.Size = UDim2.new(1, 0, 0, 100)
     playerListContainer.BackgroundTransparency = 1
-    playerListContainer.LayoutOrder = 6
+    playerListContainer.LayoutOrder = 7
+    playerListContainer.ZIndex = 3
     playerListContainer.Parent = miscTab
 
     local playerListTitle = Instance.new("TextLabel")
-    playerListTitle.Size = UDim2.new(1, 0, 0, 15)
+    playerListTitle.Size = UDim2.new(1, 0, 0, 20)
     playerListTitle.BackgroundTransparency = 1
     playerListTitle.Text = "快速选择玩家:"
-    playerListTitle.TextColor3 = Color3.fromRGB(200, 200, 200)
-    playerListTitle.TextSize = 11
-    playerListTitle.Font = Enum.Font.SourceSans
+    playerListTitle.TextColor3 = Color3.fromRGB(148, 163, 184)
+    playerListTitle.TextSize = 13
+    playerListTitle.Font = Enum.Font.Gotham
     playerListTitle.TextXAlignment = Enum.TextXAlignment.Left
+    playerListTitle.ZIndex = 4
     playerListTitle.Parent = playerListContainer
 
     self:createPlayerList(playerListContainer)
     local playerListFrame = playerListContainer:FindFirstChild("PlayerListFrame")
-    if playerListFrame then playerListFrame.Position = UDim2.new(0, 0, 0, 18) end
+    if playerListFrame then playerListFrame.Position = UDim2.new(0, 0, 0, 24) end
 
     local buttonFrame = Instance.new("Frame")
-    buttonFrame.Size = UDim2.new(0.9, 0, 0, 28)
+    buttonFrame.Size = UDim2.new(1, 0, 0, 44)
     buttonFrame.BackgroundTransparency = 1
-    buttonFrame.LayoutOrder = 7
+    buttonFrame.LayoutOrder = 8
+    buttonFrame.ZIndex = 3
     buttonFrame.Parent = miscTab
 
     self.lockButton = Instance.new("TextButton")
     self.lockButton.Size = UDim2.new(0.48, 0, 1, 0)
-    self.lockButton.BackgroundColor3 = Color3.fromRGB(100, 0, 180)
+    self.lockButton.BackgroundColor3 = Color3.fromRGB(139, 92, 246)
     self.lockButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     self.lockButton.Text = "锁定"
-    self.lockButton.Font = Enum.Font.SourceSansBold
-    self.lockButton.TextSize = 13
+    self.lockButton.Font = Enum.Font.GothamBold
+    self.lockButton.TextSize = 14
+    self.lockButton.ZIndex = 4
     self.lockButton.Parent = buttonFrame
-    Instance.new("UICorner", self.lockButton).CornerRadius = UDim.new(0, 4)
+    local lockBtnCorner = Instance.new("UICorner")
+    lockBtnCorner.CornerRadius = UDim.new(0, 10)
+    lockBtnCorner.Parent = self.lockButton
 
     self.cancelButton = Instance.new("TextButton")
     self.cancelButton.Size = UDim2.new(0.48, 0, 1, 0)
     self.cancelButton.Position = UDim2.new(0.52, 0, 0, 0)
-    self.cancelButton.BackgroundColor3 = Color3.fromRGB(160, 0, 70)
+    self.cancelButton.BackgroundColor3 = Color3.fromRGB(239, 68, 68)
     self.cancelButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     self.cancelButton.Text = "取消"
-    self.cancelButton.Font = Enum.Font.SourceSansBold
-    self.cancelButton.TextSize = 13
+    self.cancelButton.Font = Enum.Font.GothamBold
+    self.cancelButton.TextSize = 14
+    self.cancelButton.ZIndex = 4
     self.cancelButton.Parent = buttonFrame
-    Instance.new("UICorner", self.cancelButton).CornerRadius = UDim.new(0, 4)
+    local cancelBtnCorner = Instance.new("UICorner")
+    cancelBtnCorner.CornerRadius = UDim.new(0, 10)
+    cancelBtnCorner.Parent = self.cancelButton
 
     self.sitStatusLabel = Instance.new("TextLabel")
-    self.sitStatusLabel.Size = UDim2.new(0.9, 0, 0, 18)
+    self.sitStatusLabel.Size = UDim2.new(1, 0, 0, 24)
     self.sitStatusLabel.BackgroundTransparency = 1
     self.sitStatusLabel.Text = "状态: 未锁定"
-    self.sitStatusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    self.sitStatusLabel.TextSize = 12
-    self.sitStatusLabel.Font = Enum.Font.SourceSans
+    self.sitStatusLabel.TextColor3 = Color3.fromRGB(226, 232, 240)
+    self.sitStatusLabel.TextSize = 14
+    self.sitStatusLabel.Font = Enum.Font.Gotham
     self.sitStatusLabel.TextXAlignment = Enum.TextXAlignment.Left
-    self.sitStatusLabel.LayoutOrder = 8
+    self.sitStatusLabel.LayoutOrder = 9
+    self.sitStatusLabel.ZIndex = 3
     self.sitStatusLabel.Parent = miscTab
 
     -- 坐头高度参数
     local sitHeightInput = self:createParamInput(miscTab, "坐头高度", self.sitHeightOffset, 0, 10, function(value)
         self.sitHeightOffset = value
     end, false)
-    sitHeightInput.LayoutOrder = 9
+    sitHeightInput.LayoutOrder = 10
 
     -- ========== Settings Tab ==========
     local settingsTab = Instance.new("ScrollingFrame")
@@ -2508,153 +2650,189 @@ function PlayerESP:createUI()
     settingsTab.Size = UDim2.new(1, 0, 1, 0)
     settingsTab.BackgroundTransparency = 1
     settingsTab.BorderSizePixel = 0
-    settingsTab.ScrollBarThickness = 6
-    settingsTab.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
+    settingsTab.ScrollBarThickness = 4
+    settingsTab.ScrollBarImageColor3 = Color3.fromRGB(75, 85, 99)
     settingsTab.AutomaticCanvasSize = Enum.AutomaticSize.Y
     settingsTab.CanvasSize = UDim2.new(0, 0, 0, 0)
     settingsTab.Visible = false
+    settingsTab.ZIndex = 2
     settingsTab.Parent = contentFrame
     self.tabContents["Settings"] = settingsTab
 
     local settingsLayout = Instance.new("UIListLayout")
-    settingsLayout.Padding = UDim.new(0, 6)
+    settingsLayout.Padding = UDim.new(0, 12)
     settingsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
     settingsLayout.SortOrder = Enum.SortOrder.LayoutOrder
     settingsLayout.Parent = settingsTab
 
     local settingsPadding = Instance.new("UIPadding")
-    settingsPadding.PaddingTop = UDim.new(0, 8)
-    settingsPadding.PaddingBottom = UDim.new(0, 8)
+    settingsPadding.PaddingTop = UDim.new(0, 4)
+    settingsPadding.PaddingBottom = UDim.new(0, 4)
     settingsPadding.Parent = settingsTab
 
     -- 按键绑定
     local keybindSection = Instance.new("TextLabel")
-    keybindSection.Size = UDim2.new(0.9, 0, 0, 18)
+    keybindSection.Size = UDim2.new(1, 0, 0, 24)
     keybindSection.BackgroundTransparency = 1
     keybindSection.Text = "按键绑定"
-    keybindSection.TextColor3 = Color3.fromRGB(255, 255, 255)
-    keybindSection.TextSize = 13
-    keybindSection.Font = Enum.Font.SourceSansBold
+    keybindSection.TextColor3 = Color3.fromRGB(226, 232, 240)
+    keybindSection.TextSize = 16
+    keybindSection.Font = Enum.Font.GothamBold
     keybindSection.TextXAlignment = Enum.TextXAlignment.Left
     keybindSection.LayoutOrder = 1
+    keybindSection.ZIndex = 3
     keybindSection.Parent = settingsTab
 
     -- 自瞄按键
     local aimbotKeyFrame = Instance.new("Frame")
-    aimbotKeyFrame.Size = UDim2.new(0.9, 0, 0, 28)
+    aimbotKeyFrame.Size = UDim2.new(1, 0, 0, 44)
     aimbotKeyFrame.BackgroundTransparency = 1
     aimbotKeyFrame.LayoutOrder = 2
+    aimbotKeyFrame.ZIndex = 3
     aimbotKeyFrame.Parent = settingsTab
     local aimbotKeyLabel = Instance.new("TextLabel")
     aimbotKeyLabel.Size = UDim2.new(0.5, 0, 1, 0)
     aimbotKeyLabel.BackgroundTransparency = 1
     aimbotKeyLabel.Text = "自瞄按键:"
-    aimbotKeyLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    aimbotKeyLabel.TextSize = 12
-    aimbotKeyLabel.Font = Enum.Font.SourceSans
+    aimbotKeyLabel.TextColor3 = Color3.fromRGB(226, 232, 240)
+    aimbotKeyLabel.TextSize = 14
+    aimbotKeyLabel.Font = Enum.Font.Gotham
     aimbotKeyLabel.TextXAlignment = Enum.TextXAlignment.Left
+    aimbotKeyLabel.ZIndex = 4
     aimbotKeyLabel.Parent = aimbotKeyFrame
     self.aimbotKeyBox = Instance.new("TextBox")
-    self.aimbotKeyBox.Size = UDim2.new(0.4, 0, 0.8, 0)
-    self.aimbotKeyBox.Position = UDim2.new(0.55, 0, 0.1, 0)
-    self.aimbotKeyBox.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    self.aimbotKeyBox.Size = UDim2.new(0, 100, 0, 40)
+    self.aimbotKeyBox.Position = UDim2.new(1, -100, 0, 2)
+    self.aimbotKeyBox.BackgroundColor3 = Color3.fromRGB(51, 65, 85)
     self.aimbotKeyBox.TextColor3 = Color3.fromRGB(255, 255, 255)
     self.aimbotKeyBox.Text = self.aimbotKey
-    self.aimbotKeyBox.Font = Enum.Font.SourceSans
-    self.aimbotKeyBox.TextSize = 12
+    self.aimbotKeyBox.Font = Enum.Font.Gotham
+    self.aimbotKeyBox.TextSize = 14
+    self.aimbotKeyBox.TextXAlignment = Enum.TextXAlignment.Center
+    self.aimbotKeyBox.ZIndex = 4
     self.aimbotKeyBox.Parent = aimbotKeyFrame
-    Instance.new("UICorner", self.aimbotKeyBox).CornerRadius = UDim.new(0, 4)
+    local aimbotKeyCorner = Instance.new("UICorner")
+    aimbotKeyCorner.CornerRadius = UDim.new(0, 10)
+    aimbotKeyCorner.Parent = self.aimbotKeyBox
 
     -- 扳机按键
     local triggerKeyFrame = Instance.new("Frame")
-    triggerKeyFrame.Size = UDim2.new(0.9, 0, 0, 28)
+    triggerKeyFrame.Size = UDim2.new(1, 0, 0, 44)
     triggerKeyFrame.BackgroundTransparency = 1
     triggerKeyFrame.LayoutOrder = 3
+    triggerKeyFrame.ZIndex = 3
     triggerKeyFrame.Parent = settingsTab
     local triggerKeyLabel = Instance.new("TextLabel")
     triggerKeyLabel.Size = UDim2.new(0.5, 0, 1, 0)
     triggerKeyLabel.BackgroundTransparency = 1
     triggerKeyLabel.Text = "扳机按键:"
-    triggerKeyLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    triggerKeyLabel.TextSize = 12
-    triggerKeyLabel.Font = Enum.Font.SourceSans
+    triggerKeyLabel.TextColor3 = Color3.fromRGB(226, 232, 240)
+    triggerKeyLabel.TextSize = 14
+    triggerKeyLabel.Font = Enum.Font.Gotham
     triggerKeyLabel.TextXAlignment = Enum.TextXAlignment.Left
+    triggerKeyLabel.ZIndex = 4
     triggerKeyLabel.Parent = triggerKeyFrame
     self.triggerbotKeyBox = Instance.new("TextBox")
-    self.triggerbotKeyBox.Size = UDim2.new(0.4, 0, 0.8, 0)
-    self.triggerbotKeyBox.Position = UDim2.new(0.55, 0, 0.1, 0)
-    self.triggerbotKeyBox.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    self.triggerbotKeyBox.Size = UDim2.new(0, 100, 0, 40)
+    self.triggerbotKeyBox.Position = UDim2.new(1, -100, 0, 2)
+    self.triggerbotKeyBox.BackgroundColor3 = Color3.fromRGB(51, 65, 85)
     self.triggerbotKeyBox.TextColor3 = Color3.fromRGB(255, 255, 255)
     self.triggerbotKeyBox.Text = self.triggerbotKey
-    self.triggerbotKeyBox.Font = Enum.Font.SourceSans
-    self.triggerbotKeyBox.TextSize = 12
+    self.triggerbotKeyBox.Font = Enum.Font.Gotham
+    self.triggerbotKeyBox.TextSize = 14
+    self.triggerbotKeyBox.TextXAlignment = Enum.TextXAlignment.Center
+    self.triggerbotKeyBox.ZIndex = 4
     self.triggerbotKeyBox.Parent = triggerKeyFrame
-    Instance.new("UICorner", self.triggerbotKeyBox).CornerRadius = UDim.new(0, 4)
+    local triggerKeyCorner = Instance.new("UICorner")
+    triggerKeyCorner.CornerRadius = UDim.new(0, 10)
+    triggerKeyCorner.Parent = self.triggerbotKeyBox
 
     -- 飞行按键
     local flyKeyFrame = Instance.new("Frame")
-    flyKeyFrame.Size = UDim2.new(0.9, 0, 0, 28)
+    flyKeyFrame.Size = UDim2.new(1, 0, 0, 44)
     flyKeyFrame.BackgroundTransparency = 1
     flyKeyFrame.LayoutOrder = 4
+    flyKeyFrame.ZIndex = 3
     flyKeyFrame.Parent = settingsTab
     local flyKeyLabel = Instance.new("TextLabel")
     flyKeyLabel.Size = UDim2.new(0.5, 0, 1, 0)
     flyKeyLabel.BackgroundTransparency = 1
     flyKeyLabel.Text = "飞行按键:"
-    flyKeyLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    flyKeyLabel.TextSize = 12
-    flyKeyLabel.Font = Enum.Font.SourceSans
+    flyKeyLabel.TextColor3 = Color3.fromRGB(226, 232, 240)
+    flyKeyLabel.TextSize = 14
+    flyKeyLabel.Font = Enum.Font.Gotham
     flyKeyLabel.TextXAlignment = Enum.TextXAlignment.Left
+    flyKeyLabel.ZIndex = 4
     flyKeyLabel.Parent = flyKeyFrame
     self.flyKeyBox = Instance.new("TextBox")
-    self.flyKeyBox.Size = UDim2.new(0.4, 0, 0.8, 0)
-    self.flyKeyBox.Position = UDim2.new(0.55, 0, 0.1, 0)
-    self.flyKeyBox.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    self.flyKeyBox.Size = UDim2.new(0, 100, 0, 40)
+    self.flyKeyBox.Position = UDim2.new(1, -100, 0, 2)
+    self.flyKeyBox.BackgroundColor3 = Color3.fromRGB(51, 65, 85)
     self.flyKeyBox.TextColor3 = Color3.fromRGB(255, 255, 255)
     self.flyKeyBox.Text = self.flyKey
-    self.flyKeyBox.Font = Enum.Font.SourceSans
-    self.flyKeyBox.TextSize = 12
+    self.flyKeyBox.Font = Enum.Font.Gotham
+    self.flyKeyBox.TextSize = 14
+    self.flyKeyBox.TextXAlignment = Enum.TextXAlignment.Center
+    self.flyKeyBox.ZIndex = 4
     self.flyKeyBox.Parent = flyKeyFrame
-    Instance.new("UICorner", self.flyKeyBox).CornerRadius = UDim.new(0, 4)
+    local flyKeyCorner = Instance.new("UICorner")
+    flyKeyCorner.CornerRadius = UDim.new(0, 10)
+    flyKeyCorner.Parent = self.flyKeyBox
 
     -- 说明
     local infoSection = Instance.new("TextLabel")
-    infoSection.Size = UDim2.new(0.9, 0, 0, 18)
+    infoSection.Size = UDim2.new(1, 0, 0, 24)
     infoSection.BackgroundTransparency = 1
     infoSection.Text = "说明"
-    infoSection.TextColor3 = Color3.fromRGB(255, 255, 255)
-    infoSection.TextSize = 13
-    infoSection.Font = Enum.Font.SourceSansBold
+    infoSection.TextColor3 = Color3.fromRGB(226, 232, 240)
+    infoSection.TextSize = 16
+    infoSection.Font = Enum.Font.GothamBold
     infoSection.TextXAlignment = Enum.TextXAlignment.Left
     infoSection.LayoutOrder = 5
+    infoSection.ZIndex = 3
     infoSection.Parent = settingsTab
 
     local infoText = Instance.new("TextLabel")
-    infoText.Size = UDim2.new(0.9, 0, 0, 90)
+    infoText.Size = UDim2.new(1, 0, 0, 120)
     infoText.BackgroundTransparency = 1
     infoText.Text = "PC: WASD飞行 空格上升 Shift下降\n手机: 飞行时自动显示虚拟摇杆\n左侧摇杆控制方向 右侧按钮升降\n飞行时自动取消坐头锁定"
-    infoText.TextColor3 = Color3.fromRGB(180, 180, 180)
-    infoText.TextSize = 11
-    infoText.Font = Enum.Font.SourceSans
+    infoText.TextColor3 = Color3.fromRGB(148, 163, 184)
+    infoText.TextSize = 13
+    infoText.Font = Enum.Font.Gotham
     infoText.TextXAlignment = Enum.TextXAlignment.Left
     infoText.TextYAlignment = Enum.TextYAlignment.Top
     infoText.LayoutOrder = 6
+    infoText.ZIndex = 3
     infoText.Parent = settingsTab
 
     -- 折叠按钮
     self.collapsedFrame = Instance.new("TextButton")
-    self.collapsedFrame.Size = UDim2.new(0, 50, 0, 50)
-    self.collapsedFrame.Position = UDim2.new(0, 10, 0, 10)
-    self.collapsedFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)  -- 深色背景
-    self.collapsedFrame.BorderSizePixel = 2
-    self.collapsedFrame.BorderColor3 = Color3.fromRGB(0, 255, 255)  -- 霓虹青色边框
+    self.collapsedFrame.Size = UDim2.new(0, 64, 0, 64)
+    self.collapsedFrame.Position = UDim2.new(0, 20, 0, 20)
+    self.collapsedFrame.BackgroundColor3 = Color3.fromRGB(24, 24, 32)
+    self.collapsedFrame.BorderSizePixel = 0
     self.collapsedFrame.Text = "⚡"
-    self.collapsedFrame.TextColor3 = Color3.fromRGB(0, 255, 255)  -- 霓虹青色
-    self.collapsedFrame.TextSize = 24
-    self.collapsedFrame.Font = Enum.Font.SourceSansBold
+    self.collapsedFrame.TextColor3 = Color3.fromRGB(255, 255, 255)
+    self.collapsedFrame.TextSize = 32
+    self.collapsedFrame.Font = Enum.Font.GothamBold
     self.collapsedFrame.Visible = false
+    self.collapsedFrame.ZIndex = 10
     self.collapsedFrame.Parent = self.screenGui
-    Instance.new("UICorner", self.collapsedFrame).CornerRadius = UDim.new(0, 8)
+    local collapsedCorner = Instance.new("UICorner")
+    collapsedCorner.CornerRadius = UDim.new(0, 16)
+    collapsedCorner.Parent = self.collapsedFrame
+    
+    -- 折叠按钮阴影
+    local collapsedShadow = Instance.new("Frame")
+    collapsedShadow.Size = UDim2.new(1, 8, 1, 8)
+    collapsedShadow.Position = UDim2.new(0, -4, 0, -4)
+    collapsedShadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    collapsedShadow.BackgroundTransparency = 0.85
+    collapsedShadow.ZIndex = 9
+    collapsedShadow.Parent = self.collapsedFrame
+    local collapsedShadowCorner = Instance.new("UICorner")
+    collapsedShadowCorner.CornerRadius = UDim.new(0, 18)
+    collapsedShadowCorner.Parent = collapsedShadow
 
     -- 事件绑定 (带点击特效)
     self.toggleButton.MouseButton1Click:Connect(function() self:buttonClickEffect(self.toggleButton) self:toggleESP() end)
@@ -2667,7 +2845,7 @@ function PlayerESP:createUI()
         self.aimbotIsGroundAiming = false
         self.aimbotGroundAimTimer = 0
         self.groundAimToggleBtn.Text = "瞄地面: " .. (self.aimbotGroundAimEnabled and "开启" or "关闭")
-        self:tweenButton(self.groundAimToggleBtn, self.aimbotGroundAimEnabled and Color3.fromRGB(0, 160, 130) or Color3.fromRGB(160, 0, 70))
+        self:tweenButton(self.groundAimToggleBtn, self.aimbotGroundAimEnabled and Color3.fromRGB(34, 197, 94) or Color3.fromRGB(239, 68, 68))
     end)
     self.triggerbotToggleButton.MouseButton1Click:Connect(function() self:buttonClickEffect(self.triggerbotToggleButton) self:toggleTriggerbot() end)
     self.wallCheckButton.MouseButton1Click:Connect(function() self:buttonClickEffect(self.wallCheckButton) self:toggleWallCheck() end)
@@ -2690,14 +2868,14 @@ function PlayerESP:createUI()
         self:buttonClickEffect(self.triggerHeadOnlyBtn)
         self.triggerbotHeadOnly = not self.triggerbotHeadOnly
         self.triggerHeadOnlyBtn.Text = "仅头部触发: " .. (self.triggerbotHeadOnly and "开启" or "关闭")
-        self:tweenButton(self.triggerHeadOnlyBtn, self.triggerbotHeadOnly and Color3.fromRGB(0, 160, 130) or Color3.fromRGB(80, 80, 80))
+        self:tweenButton(self.triggerHeadOnlyBtn, self.triggerbotHeadOnly and Color3.fromRGB(34, 197, 94) or Color3.fromRGB(51, 65, 85))
     end)
     
     teamToggle.MouseButton1Click:Connect(function()
         self:buttonClickEffect(teamToggle)
         self.colors.teamBased = not self.colors.teamBased
         teamToggle.Text = "队伍颜色: " .. (self.colors.teamBased and "开启" or "关闭")
-        self:tweenButton(teamToggle, self.colors.teamBased and Color3.fromRGB(0, 160, 130) or Color3.fromRGB(80, 80, 80))
+        self:tweenButton(teamToggle, self.colors.teamBased and Color3.fromRGB(34, 197, 94) or Color3.fromRGB(51, 65, 85))
         self:updateAllColors()
     end)
 
