@@ -61,10 +61,10 @@ local PlayerESP = {
     -- 自瞄系统
     aimbotEnabled = false,
     aimbotKey = "q",
-    aimbotRange = 100,
+    aimbotRange = 1000,
     aimbotFov = 360,
-    aimbotStrength = 10,
-    aimbotSmoothness = 5,
+    aimbotStrength = 30,
+    aimbotSmoothness = 20,
     aimbotPrediction = 0.5,
     wallCheck = true,
     teamCheck = true,
@@ -76,8 +76,8 @@ local PlayerESP = {
     
     -- 自瞄强制瞄地面
     aimbotGroundAimEnabled = false,   -- 瞄地面功能开关
-    aimbotGroundAimTime = 1.0,      -- 瞄准目标时间（默认1秒）
-    aimbotGroundDuration = 0.5,     -- 瞄地面持续时间（0.5秒）
+    aimbotGroundAimTime = 0.1,      -- 瞄准目标时间（默认1秒）
+    aimbotGroundDuration = 0.004,     -- 瞄地面持续时间（0.5秒）
     aimbotGroundAimTimer = 0,       -- 计时器
     aimbotIsGroundAiming = false,   -- 是否正在瞄地面
     
@@ -1952,7 +1952,7 @@ function PlayerESP:createUI()
 
     -- 主框架 (霓虹赛博朋克风格)
     self.mainFrame = Instance.new("Frame")
-    self.mainFrame.Size = UDim2.new(0, 280, 0, 420)
+    self.mainFrame.Size = UDim2.new(0, 280, 0, 360)
     self.mainFrame.Position = UDim2.new(0, 10, 0, 10)
     self.mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)  -- 深蓝黑色背景
     self.mainFrame.BorderSizePixel = 2
@@ -1979,7 +1979,7 @@ function PlayerESP:createUI()
     titleLabel.Size = UDim2.new(0.6, 0, 1, 0)
     titleLabel.Position = UDim2.new(0, 10, 0, 0)
     titleLabel.BackgroundTransparency = 1
-    titleLabel.Text = "⚡ ESP 控制面板"
+    titleLabel.Text = "辅助"
     titleLabel.TextColor3 = Color3.fromRGB(0, 255, 255)  -- 霓虹青色
     titleLabel.TextSize = 14
     titleLabel.Font = Enum.Font.SourceSansBold
