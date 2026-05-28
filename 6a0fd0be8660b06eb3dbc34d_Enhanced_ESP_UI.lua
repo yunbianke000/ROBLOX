@@ -1982,7 +1982,7 @@ function PlayerESP:createUI()
 
     -- 主框架 (现代风格)
     self.mainFrame = Instance.new("Frame")
-    self.mainFrame.Size = UDim2.new(0, 360, 0, 360)
+    self.mainFrame.Size = UDim2.new(0, 360, 0, 520)
     self.mainFrame.Position = UDim2.new(0, 20, 0, 20)
     self.mainFrame.BackgroundColor3 = Color3.fromRGB(24, 24, 32)
     self.mainFrame.BorderSizePixel = 0
