@@ -778,7 +778,11 @@ end)
 print("[ESP] 折叠/展开逻辑已绑定")
 
 -- ============================================
--- 透视 - 射线
+-- ESP 渲染 — Drawing API（参考 Enhanced_ESP_UI.lua 的稳定实现）
+-- ============================================
+
+-- ============================================
+-- 透视 - 射线（Drawing.new("Line")）
 -- ============================================
 function ESP:createRay(player)
 	if not player then return end
@@ -786,13 +790,13 @@ function ESP:createRay(player)
 	local ray = Drawing.new("Line")
 	ray.Color = Config.RayColor
 	ray.Thickness = 1
-	ray.Visible = Config.ShowRays
+	ray.Visible = false
 	self.rays[player] = { player = player, drawing = ray }
 end
 
 function ESP:removeRay(player)
 	if self.rays[player] and self.rays[player].drawing then
-		self.rays[player].drawing:Remove()
+		pcall(function() self.rays[player].drawing:Remove() end)
 		self.rays[player] = nil
 	end
 end
@@ -805,24 +809,30 @@ function ESP:updateRays()
 		return
 	end
 	local camera = Workspace.CurrentCamera
+	if not camera then return end
 	local viewportSize = camera.ViewportSize
+	-- 射线起点：屏幕底部中央
 	local centerScreen = Vector2.new(viewportSize.X / 2, viewportSize.Y)
+
 	for player, data in pairs(self.rays) do
 		local ray = data.drawing
-		if self:isEnemy(player) then
-			local char = player.Character
-			if char then
-				local head = char:FindFirstChild("Head")
-				if head then
-					local headPos = head.Position + Vector3.new(0, 1, 0)
-					local screenPos, onScreen = camera:WorldToViewportPoint(headPos)
-					if onScreen then
-						ray.From = centerScreen
-						ray.To = Vector2.new(screenPos.X, screenPos.Y)
-						ray.Visible = true
-					else
-						ray.Visible = false
-					end
+		if not ray then continue end
+		if not self:isEnemy(player) then
+			ray.Visible = false
+			continue
+		end
+		local char = player.Character
+		if char then
+			local head = char:FindFirstChild("Head")
+			if head then
+				local headPos = head.Position + Vector3.new(0, 1, 0)
+				local screenPos, onScreen = camera:WorldToViewportPoint(headPos)
+
+				if onScreen then
+					ray.From = centerScreen
+					ray.To = Vector2.new(screenPos.X, screenPos.Y)
+					ray.Color = Config.RayColor
+					ray.Visible = true
 				else
 					ray.Visible = false
 				end
@@ -836,37 +846,42 @@ function ESP:updateRays()
 end
 
 -- ============================================
--- 透视 - 血量条
+-- 透视 - 血量条（Drawing.new("Square")）
 -- ============================================
 function ESP:createHealthBar(player)
 	if not player then return end
 	if self.healthBars[player] then return end
-	self.healthBars[player] = {
+
+	local healthBar = {
 		bg = Drawing.new("Square"),
 		fill = Drawing.new("Square"),
 		outline = Drawing.new("Square"),
 		player = player,
 	}
-	local bar = self.healthBars[player]
-	bar.bg.Filled = true
-	bar.bg.Color = Color3.fromRGB(40, 40, 40)
-	bar.bg.Thickness = 1
-	bar.bg.Visible = Config.ShowHealthBars
-	bar.fill.Filled = true
-	bar.fill.Thickness = 1
-	bar.fill.Visible = Config.ShowHealthBars
-	bar.outline.Filled = false
-	bar.outline.Color = Color3.fromRGB(0, 0, 0)
-	bar.outline.Thickness = 1
-	bar.outline.Visible = Config.ShowHealthBars
+
+	healthBar.bg.Filled = true
+	healthBar.bg.Color = Color3.fromRGB(40, 40, 40)
+	healthBar.bg.Thickness = 1
+	healthBar.bg.Visible = false
+
+	healthBar.fill.Filled = true
+	healthBar.fill.Thickness = 1
+	healthBar.fill.Visible = false
+
+	healthBar.outline.Filled = false
+	healthBar.outline.Color = Color3.fromRGB(0, 0, 0)
+	healthBar.outline.Thickness = 1
+	healthBar.outline.Visible = false
+
+	self.healthBars[player] = healthBar
 end
 
 function ESP:removeHealthBar(player)
 	if self.healthBars[player] then
 		local bar = self.healthBars[player]
-		bar.bg:Remove()
-		bar.fill:Remove()
-		bar.outline:Remove()
+		pcall(function() bar.bg:Remove() end)
+		pcall(function() bar.fill:Remove() end)
+		pcall(function() bar.outline:Remove() end)
 		self.healthBars[player] = nil
 	end
 end
@@ -881,42 +896,49 @@ function ESP:updateHealthBars()
 		return
 	end
 	local camera = Workspace.CurrentCamera
+	if not camera then return end
 	for player, bar in pairs(self.healthBars) do
-		if self:isEnemy(player) then
-			local char = player.Character
-			if char then
-				local humanoid = char:FindFirstChild("Humanoid")
-				local head = char:FindFirstChild("Head")
-				if humanoid and head and humanoid.Health > 0 then
-					local healthPercent = humanoid.Health / humanoid.MaxHealth
-					local headPos = head.Position + Vector3.new(0, 1.5, 0)
-					local screenPos, onScreen = camera:WorldToViewportPoint(headPos)
-					if onScreen then
-						local barWidth = 40
-						local barHeight = 4
-						local x = screenPos.X - barWidth / 2
-						local y = screenPos.Y - 25
-						bar.bg.Position = Vector2.new(x, y)
-						bar.bg.Size = Vector2.new(barWidth, barHeight)
-						bar.bg.Visible = true
-						bar.fill.Position = Vector2.new(x, y)
-						bar.fill.Size = Vector2.new(barWidth * healthPercent, barHeight)
-						if healthPercent > 0.6 then
-							bar.fill.Color = Config.HealthBarColor_High
-						elseif healthPercent > 0.3 then
-							bar.fill.Color = Config.HealthBarColor_Mid
-						else
-							bar.fill.Color = Config.HealthBarColor_Low
-						end
-						bar.fill.Visible = true
-						bar.outline.Position = Vector2.new(x, y)
-						bar.outline.Size = Vector2.new(barWidth, barHeight)
-						bar.outline.Visible = true
+		if not self:isEnemy(player) then
+			bar.bg.Visible = false
+			bar.fill.Visible = false
+			bar.outline.Visible = false
+			continue
+		end
+		local char = player.Character
+		if char then
+			local humanoid = char:FindFirstChild("Humanoid")
+			local head = char:FindFirstChild("Head")
+			if humanoid and head and humanoid.Health > 0 then
+				local healthPercent = humanoid.Health / humanoid.MaxHealth
+				local headPos = head.Position + Vector3.new(0, 1.5, 0)
+				local screenPos, onScreen = camera:WorldToViewportPoint(headPos)
+				if onScreen then
+					local barWidth = 40
+					local barHeight = 4
+					local x = screenPos.X - barWidth / 2
+					local y = screenPos.Y - 25
+
+					bar.bg.Position = Vector2.new(x, y)
+					bar.bg.Size = Vector2.new(barWidth, barHeight)
+					bar.bg.Visible = true
+
+					bar.fill.Position = Vector2.new(x, y)
+					bar.fill.Size = Vector2.new(barWidth * healthPercent, barHeight)
+
+					local color
+					if healthPercent > 0.6 then
+						color = Config.HealthBarColor_High
+					elseif healthPercent > 0.3 then
+						color = Config.HealthBarColor_Mid
 					else
-						bar.bg.Visible = false
-						bar.fill.Visible = false
-						bar.outline.Visible = false
+						color = Config.HealthBarColor_Low
 					end
+					bar.fill.Color = color
+					bar.fill.Visible = true
+
+					bar.outline.Position = Vector2.new(x, y)
+					bar.outline.Size = Vector2.new(barWidth, barHeight)
+					bar.outline.Visible = true
 				else
 					bar.bg.Visible = false
 					bar.fill.Visible = false
@@ -936,23 +958,25 @@ function ESP:updateHealthBars()
 end
 
 -- ============================================
--- 透视 - 头部圆圈
+-- 透视 - 头部圆圈（Drawing.new("Circle")）
 -- ============================================
 function ESP:createHeadCircle(player)
 	if not player then return end
 	if self.headCircles[player] then return end
+
 	local circle = Drawing.new("Circle")
 	circle.Color = Config.HeadCircleColor
 	circle.Thickness = 2
 	circle.Filled = false
 	circle.NumSides = 32
-	circle.Visible = Config.ShowHeadCircles
+	circle.Visible = false
+
 	self.headCircles[player] = { drawing = circle, player = player }
 end
 
 function ESP:removeHeadCircle(player)
 	if self.headCircles[player] then
-		self.headCircles[player].drawing:Remove()
+		pcall(function() self.headCircles[player].drawing:Remove() end)
 		self.headCircles[player] = nil
 	end
 end
@@ -965,31 +989,31 @@ function ESP:updateHeadCircles()
 		return
 	end
 	local camera = Workspace.CurrentCamera
+	if not camera then return end
 	local localChar = self.localPlayer.Character
 	if not localChar then return end
 	local localHead = localChar:FindFirstChild("Head")
-	if not localHead then return end
 	for player, data in pairs(self.headCircles) do
 		local circle = data.drawing
-		if self:isEnemy(player) then
-			local char = player.Character
-			if char then
-				local head = char:FindFirstChild("Head")
-				local humanoid = char:FindFirstChild("Humanoid")
-				if head and humanoid and humanoid.Health > 0 then
-					local headPos = head.Position
-					local screenPos, onScreen = camera:WorldToViewportPoint(headPos)
-					local distance = (headPos - localHead.Position).Magnitude
-					if onScreen then
-						local baseRadius = 15
-						local radius = math.max(5, baseRadius * (50 / distance))
-						circle.Position = Vector2.new(screenPos.X, screenPos.Y)
-						circle.Radius = radius
-						circle.Color = Config.HeadCircleColor
-						circle.Visible = true
-					else
-						circle.Visible = false
-					end
+		if not self:isEnemy(player) then
+			circle.Visible = false
+			continue
+		end
+		local char = player.Character
+		if char then
+			local head = char:FindFirstChild("Head")
+			local humanoid = char:FindFirstChild("Humanoid")
+			if head and humanoid and humanoid.Health > 0 then
+				local headPos = head.Position
+				local screenPos, onScreen = camera:WorldToViewportPoint(headPos)
+				if onScreen then
+					local distance = localHead and (headPos - localHead.Position).Magnitude or 50
+					local radius = math.max(5, 15 * (50 / distance))
+
+					circle.Position = Vector2.new(screenPos.X, screenPos.Y)
+					circle.Radius = radius
+					circle.Color = Config.HeadCircleColor
+					circle.Visible = true
 				else
 					circle.Visible = false
 				end
@@ -1003,16 +1027,19 @@ function ESP:updateHeadCircles()
 end
 
 -- ============================================
--- 透视 - FOV 圈
+-- 透视 - FOV 圈（Drawing.new("Circle")）
 -- ============================================
 function ESP:createFovCircle()
 	if self.fovCircle then return end
-	self.fovCircle = Drawing.new("Circle")
-	self.fovCircle.Color = Config.FovCircleColor
-	self.fovCircle.Thickness = 1
-	self.fovCircle.Filled = false
-	self.fovCircle.NumSides = 64
-	self.fovCircle.Visible = false
+
+	local circle = Drawing.new("Circle")
+	circle.Color = Config.FovCircleColor
+	circle.Thickness = 1
+	circle.Filled = false
+	circle.NumSides = 64
+	circle.Visible = false
+
+	self.fovCircle = circle
 end
 
 function ESP:updateFovCircle()
@@ -1022,6 +1049,7 @@ function ESP:updateFovCircle()
 		return
 	end
 	local camera = Workspace.CurrentCamera
+	if not camera then return end
 	local viewportSize = camera.ViewportSize
 	local fovRadius = (viewportSize.Y / 2) * math.tan(math.rad(Config.Aimbot_FOV / 2))
 	self.fovCircle.Position = Vector2.new(viewportSize.X / 2, viewportSize.Y / 2)
@@ -1084,17 +1112,17 @@ function ESP:init()
 		if player == self.localPlayer then
 			self:stopAimbot()
 			for _, data in pairs(self.rays) do
-				if data.drawing then data.drawing:Remove() end
+				if data.drawing then pcall(function() data.drawing:Remove() end) end
 			end
 			for _, bar in pairs(self.healthBars) do
-				bar.bg:Remove()
-				bar.fill:Remove()
-				bar.outline:Remove()
+				pcall(function() bar.bg:Remove() end)
+				pcall(function() bar.fill:Remove() end)
+				pcall(function() bar.outline:Remove() end)
 			end
 			for _, data in pairs(self.headCircles) do
-				data.drawing:Remove()
+				pcall(function() data.drawing:Remove() end)
 			end
-			if self.fovCircle then self.fovCircle:Remove() end
+			if self.fovCircle then pcall(function() self.fovCircle:Remove() end) end
 		end
 	end)
 end
